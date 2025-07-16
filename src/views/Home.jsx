@@ -28,11 +28,15 @@ const accesos = [
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-4 py-10 text-center bg-base-200">
+      
+
+     
       <img
-        src="/paintface.jpg"
+        src="https://res.cloudinary.com/doxadkm4r/image/upload/v1752703043/icono_pedidos_sin_fondo_l6ssgq.png"
         alt="Logo de pintura"
         className="object-cover w-40 h-40 mb-6 rounded-full shadow-md"
       />
+      
 
       <h1 className="mb-4 text-4xl font-extrabold text-white">📦 Sistema de Pedidos</h1>
       <p className="mb-10 text-lg text-gray-300">Seleccioná tu tipo de acceso</p>
