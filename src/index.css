@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos base fijos para modo claro */
+body {
+  background-color: #f3f4f6; /* Tailwind: bg-gray-100 */
+  color: #1f2937;           /* Tailwind: text-gray-900 */
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+}
+
+/* Enlaces */
+a {
+  font-weight: 500;
+  color: #2563eb; /* Tailwind: text-blue-600 */
+  text-decoration: inherit;
+}
+a:hover {
+  color: #1d4ed8; /* Tailwind: text-blue-700 */
+}
+
+/* Botones básicos (opcional, si no usás DaisyUI en algunos lugares) */
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #e5e7eb; /* Tailwind: bg-gray-200 */
+  cursor: pointer;
+  transition: border-color 0.25s, background-color 0.25s;
+}
+button:hover {
+  border-color: #2563eb; /* Tailwind: blue-600 */
+  background-color: #dbeafe; /* Tailwind: blue-100 */
+}
+button:focus,
+button:focus-visible {
+  outline: 2px solid #3b82f6; /* Tailwind: blue-500 */
+}
+
+/* Remover esquema oscuro automático del navegador */
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
