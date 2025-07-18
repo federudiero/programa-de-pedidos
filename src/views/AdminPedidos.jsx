@@ -123,8 +123,14 @@ function AdminPedidos() {
             <button className="btn btn-info btn-outline" onClick={() => navigate("/admin/dividir-pedidos")}>
               🗂 División de Pedidos
             </button>
+            <button
+  className="btn btn-outline btn-success"
+  onClick={() => navigate("/admin/stock")}
+>
+  🧾 Ver Stock
+</button>
             <button className="btn btn-outline" onClick={() => navigate("/")}>
-              ⬅ Volver a zona de pedidos
+              ⬅ Volver a Home
             </button>
           </div>
         </div>

@@ -20,11 +20,10 @@ function LoginVendedor() {
       const email = result.user.email;
 
       if (vendedoresPermitidos.includes(email)) {
-        localStorage.setItem("vendedorAutenticado", "true");
-        localStorage.setItem("emailVendedor", email);
-        Swal.fire("✅ Bienvenido", "Acceso concedido como vendedor", "success");
-        navigate("/vendedor");
-      } else {
+  localStorage.setItem("vendedorAutenticado", "true");
+  localStorage.setItem("emailVendedor", email);
+  navigate("/vendedor");
+}else {
         setError("❌ Este correo no está autorizado como vendedor.");
         await auth.signOut();
       }
