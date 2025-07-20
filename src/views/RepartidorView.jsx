@@ -15,13 +15,16 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import RutaOptimizada from "../components/RutaOptimizada";
 import ListaRutaPasoAPaso from "../components/ListaRutaPasoAPaso";
 import BotonIniciarViaje from "../components/BotonIniciarViaje";
+import RutasDivididas from "../components/RutasDivididas";
+import { BASE_DIRECCION } from "../config.jsx";
+
 
 function RepartidorView() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [gastoExtra, setGastoExtra] = useState(0);
-  const [campoAsignacion, setCampoAsignacion] = useState("");
+ 
   const [pedidosOrdenados, setPedidosOrdenados] = useState([]);
   const [viajeIniciado, setViajeIniciado] = useState(false);
 
@@ -48,7 +51,7 @@ function RepartidorView() {
     const email = localStorage.getItem("emailRepartidor");
     if (!autorizado || !email) return navigate("/login-repartidor");
 
-    setCampoAsignacion(email);
+   
     cargarPedidos(fechaSeleccionada, email);
   }, [fechaSeleccionada]);
 
@@ -269,11 +272,10 @@ function RepartidorView() {
 
         <div className="mt-6">
           <h4 className="mb-2 text-xl font-semibold">🗺️ Ruta Optimizada</h4>
-          <RutaOptimizada
-            fecha={fechaSeleccionada}
-            repartidorCampo={campoAsignacion}
-            setListaOrdenada={setPedidosOrdenados}
-          />
+          <RutasDivididas
+  pedidos={pedidosOrdenados}
+  base={{ direccion: BASE_DIRECCION }}
+/>
         </div>
 
         <ListaRutaPasoAPaso pedidosOrdenados={pedidosOrdenados} />

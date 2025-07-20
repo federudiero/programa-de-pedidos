@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import PedidoForm from "../components/PedidoForm";
 import { db, auth } from "../firebase/firebase";
 import PedidoTabla from "../components/PedidoTabla";
+
 import {
   collection,
   addDoc,
