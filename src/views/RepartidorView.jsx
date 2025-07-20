@@ -29,22 +29,29 @@ function RepartidorView() {
   const [viajeIniciado, setViajeIniciado] = useState(false);
 
   const cargarPedidos = async (fecha, email) => {
-    const inicio = Timestamp.fromDate(startOfDay(fecha));
-    const fin = Timestamp.fromDate(endOfDay(fecha));
-    const q = query(
-      collection(db, "pedidos"),
-      where("fecha", ">=", inicio),
-      where("fecha", "<=", fin),
-      where("asignadoA", "array-contains", email)
-    );
-    const snapshot = await getDocs(q);
-    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setPedidos(data);
+  const inicio = Timestamp.fromDate(startOfDay(fecha));
+  const fin = Timestamp.fromDate(endOfDay(fecha));
+  const q = query(
+    collection(db, "pedidos"),
+    where("fecha", ">=", inicio),
+    where("fecha", "<=", fin),
+    where("asignadoA", "array-contains", email)
+  );
+  const snapshot = await getDocs(q);
+  const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const fechaId = format(fecha, 'yyyy-MM-dd');
-    const gastoDoc = await getDoc(doc(db, "gastosReparto", fechaId));
-    setGastoExtra(gastoDoc.exists() ? gastoDoc.data().monto || 0 : 0);
-  };
+  setPedidos(data);
+
+  // ✅ Esta línea es clave
+  setPedidosOrdenados(
+    data.sort((a, b) => (a.ordenRuta || 9999) - (b.ordenRuta || 9999))
+  );
+
+  const fechaId = format(fecha, 'yyyy-MM-dd');
+  const gastoDoc = await getDoc(doc(db, "gastosReparto", fechaId));
+  setGastoExtra(gastoDoc.exists() ? gastoDoc.data().monto || 0 : 0);
+};
+
 
   useEffect(() => {
     const autorizado = localStorage.getItem("repartidorAutenticado");
@@ -272,11 +279,11 @@ function RepartidorView() {
 
         <div className="mt-6">
           <h4 className="mb-2 text-xl font-semibold">🗺️ Ruta Optimizada</h4>
-          <RutasDivididas
+       <RutasDivididas
   pedidos={pedidosOrdenados}
-  base={{ direccion: BASE_DIRECCION }}
+  base={{ direccion: BASE_DIRECCION }} // ✅ Así lo convertís a objeto
 />
-        </div>
+    </div>
 
         <ListaRutaPasoAPaso pedidosOrdenados={pedidosOrdenados} />
         <BotonIniciarViaje pedidos={pedidosOrdenados} onStart={() => setViajeIniciado(true)} />
