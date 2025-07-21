@@ -1,4 +1,3 @@
-// src/pages/AdminStock.jsx
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
@@ -6,9 +5,15 @@ import { nanoid } from "nanoid";
 import { useNavigate } from "react-router-dom";
 
 function AdminStock() {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [nuevoProducto, setNuevoProducto] = useState({ nombre: "", precio: "", stock: 0, stockMinimo: 10 });
+
+  // Detectar modo del sistema y aplicar tema
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", prefersDark ? "night" : "light");
+  }, []);
 
   const cargarProductos = async () => {
     const snapshot = await getDocs(collection(db, "productos"));
@@ -43,11 +48,11 @@ function AdminStock() {
   }, []);
 
   return (
-    <div className="min-h-screen p-6 bg-base-200 text-base-content">
+    <div className="min-h-screen p-6">
       <div className="max-w-4xl mx-auto">
         <h2 className="mb-6 text-2xl font-bold">📦 Gestión de Stock</h2>
 
-        <div className="p-4 mb-6 border shadow rounded-xl bg-base-100">
+        <div className="p-4 mb-6 border shadow rounded-xl bg-base-100 text-base-content">
           <h3 className="mb-2 font-semibold">➕ Agregar producto</h3>
           <div className="grid gap-2 md:grid-cols-4">
             <input className="input input-bordered" placeholder="Nombre"
@@ -72,7 +77,7 @@ function AdminStock() {
 
         <div className="grid gap-4">
           {productos.map((prod) => (
-            <div key={prod.id} className="p-4 border shadow bg-base-100 rounded-xl">
+            <div key={prod.id} className="p-4 border shadow bg-base-100 text-base-content rounded-xl">
               <div className="grid gap-2 md:grid-cols-4">
                 <input className="input input-bordered" value={prod.nombre}
                   onChange={(e) => setProductos(p => p.map(pr => pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))}
@@ -95,9 +100,9 @@ function AdminStock() {
           ))}
         </div>
       </div>
-       <button className="hover:text-black btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
-              ⬅ Volver a Administrador
-            </button>
+      <button className="mt-6 hover:text-black btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
+        ⬅ Volver a Administrador
+      </button>
     </div>
   );
 }

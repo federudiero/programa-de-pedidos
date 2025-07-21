@@ -1,6 +1,8 @@
 import React from "react";
 import Swal from "sweetalert2";
 
+
+
 const PedidoTabla = ({ pedidos, onEditar, onEliminar }) => {
   const copiarPedidoCompleto = (pedido) => {
     const textoCompleto = `
@@ -19,6 +21,9 @@ const PedidoTabla = ({ pedidos, onEditar, onEliminar }) => {
 
   return (
     <div className="container px-4 py-4 mx-auto">
+      {/* 🔘 Switch de tema arriba a la derecha */}
+      
+
       {pedidos.length === 0 ? (
         <p className="mt-4 text-center text-gray-400">No hay pedidos cargados.</p>
       ) : (

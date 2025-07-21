@@ -1,13 +1,22 @@
 import React from "react";
+import ThemeSwitcher from "../components/ThemeSwitcher"; 
 
 const ListaRutaPasoAPaso = ({ pedidosOrdenados }) => {
   if (!pedidosOrdenados || pedidosOrdenados.length === 0) {
-    return <p className="mt-3">📭 No hay pedidos para mostrar.</p>;
+    return (
+      <div className="mt-6">
+        <ThemeSwitcher />
+        <p className="mt-3">📭 No hay pedidos para mostrar.</p>
+      </div>
+    );
   }
 
   return (
     <div className="mt-6">
-      <h4 className="mb-4 text-xl font-semibold">🧭 Lista paso a paso</h4>
+      <div className="flex items-center justify-between mb-4">
+        <h4 className="text-xl font-semibold">🧭 Lista paso a paso</h4>
+      
+      </div>
 
       <div className="space-y-4">
         {pedidosOrdenados.map((p, index) => (

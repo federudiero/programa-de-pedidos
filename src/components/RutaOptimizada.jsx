@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { GoogleMap, DirectionsRenderer, useJsApiLoader } from "@react-google-maps/api";
+import ThemeSwitcher from "../components/ThemeSwitcher"; // ✅ importado
 
 const RutaOptimizada = ({ origin, destination, waypoints }) => {
   const [directions, setDirections] = useState(null);
@@ -34,19 +35,22 @@ const RutaOptimizada = ({ origin, destination, waypoints }) => {
   }, [isLoaded, origin, destination, waypoints]);
 
   return (
-    <div className="h-[500px] w-full">
+    <div className="relative h-[500px] w-full">
+      {/* 🔘 Botón de cambio de tema fijo arriba a la derecha */}
+    
+
       {isLoaded && (
         <GoogleMap
           mapContainerStyle={{ height: "100%", width: "100%" }}
-          center={{ lat: -34.65, lng: -58.45 }} // Podés ajustar según tu zona
+          center={{ lat: -34.65, lng: -58.45 }}
           zoom={11}
         >
           {directions && (
             <DirectionsRenderer
               directions={directions}
               options={{
-                suppressMarkers: false,        // Cambiar a true si querés ocultar pines
-                preserveViewport: false        // false = centra y hace zoom automáticamente
+                suppressMarkers: false,
+                preserveViewport: false,
               }}
             />
           )}

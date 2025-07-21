@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import RutaOptimizada from "./RutaOptimizada";
+import ThemeSwitcher from "../components/ThemeSwitcher"; // ✅ agregado
 
 const RutasDivididas = ({ pedidos, base }) => {
   const [rutaActual, setRutaActual] = useState(0);
@@ -18,6 +19,7 @@ const RutasDivididas = ({ pedidos, base }) => {
 
   return (
     <div className="p-4 space-y-4">
+   
       <div className="flex flex-wrap gap-2">
         {rutas.map((_, idx) => (
           <button

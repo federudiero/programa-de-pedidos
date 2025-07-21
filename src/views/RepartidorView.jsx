@@ -17,6 +17,7 @@ import ListaRutaPasoAPaso from "../components/ListaRutaPasoAPaso";
 import BotonIniciarViaje from "../components/BotonIniciarViaje";
 import RutasDivididas from "../components/RutasDivididas";
 import { BASE_DIRECCION } from "../config.jsx";
+import ThemeSwitcher from "../components/ThemeSwitcher"; // ✅ agregado
 
 
 function RepartidorView() {
@@ -153,8 +154,13 @@ function RepartidorView() {
 
   return (
     <div className="min-h-screen p-4 bg-base-100 text-base-content">
+    <div className="absolute top-4 right-4">
+        <ThemeSwitcher />
+      </div>
       <div className="max-w-screen-xl mx-auto">
         <h2 className="mb-4 text-2xl font-bold">🚚 Pedidos para Reparto</h2>
+
+
 
         <DatePicker selected={fechaSeleccionada} onChange={setFechaSeleccionada} className="input input-bordered" />
 

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import PedidoForm from "../components/PedidoForm";
 import { db, auth } from "../firebase/firebase";
 import PedidoTabla from "../components/PedidoTabla";
+import ThemeSwitcher from "../components/ThemeSwitcher";
+
 
 import {
   collection,
@@ -113,11 +115,13 @@ function VendedorView() {
       <div className="max-w-screen-xl px-4 py-6 mx-auto">
         <div className="flex flex-col items-center justify-between gap-4 mb-8 md:flex-row">
           <h2 className="text-2xl font-bold">🎨 Sistema de Pedidos - Pinturería</h2>
-          <div className="flex gap-2">
-            <button className="btn btn-error" onClick={handleLogout}>
-              Cerrar sesión
-            </button>
-          </div>
+         <div className="flex gap-2">
+  <ThemeSwitcher />
+  <button className="btn btn-error" onClick={handleLogout}>
+    Cerrar sesión
+  </button>
+</div>
+
         </div>
 
         <div className="mb-6">

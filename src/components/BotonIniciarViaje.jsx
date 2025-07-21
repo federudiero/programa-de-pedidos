@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 function generarLinkGoogleMaps(pedidos) {
   const base = "-34.688263,-58.546082"; // Coordenadas de la base
@@ -12,6 +12,11 @@ function generarLinkGoogleMaps(pedidos) {
 }
 
 const BotonIniciarViaje = ({ pedidos }) => {
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", prefersDark ? "night" : "light");
+  }, []);
+
   if (!pedidos || pedidos.length === 0) return null;
 
   return (
@@ -19,7 +24,7 @@ const BotonIniciarViaje = ({ pedidos }) => {
       href={generarLinkGoogleMaps(pedidos)}
       target="_blank"
       rel="noopener noreferrer"
-      className="btn btn-accent mt-4"
+      className="mt-4 btn btn-accent"
     >
       🚀 Iniciar viaje en Google Maps
     </a>

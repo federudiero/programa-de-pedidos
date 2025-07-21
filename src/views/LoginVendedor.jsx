@@ -3,6 +3,7 @@ import { auth, googleProvider } from "../firebase/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 const vendedoresPermitidos = [
   "federudiero@gmail.com",
@@ -20,10 +21,10 @@ function LoginVendedor() {
       const email = result.user.email;
 
       if (vendedoresPermitidos.includes(email)) {
-  localStorage.setItem("vendedorAutenticado", "true");
-  localStorage.setItem("emailVendedor", email);
-  navigate("/vendedor");
-}else {
+        localStorage.setItem("vendedorAutenticado", "true");
+        localStorage.setItem("emailVendedor", email);
+        navigate("/vendedor");
+      } else {
         setError("❌ Este correo no está autorizado como vendedor.");
         await auth.signOut();
       }
@@ -33,30 +34,35 @@ function LoginVendedor() {
     }
   };
 
-return (
-  <div className="flex items-center justify-center min-h-screen bg-base-100">
-    <div className="w-full max-w-md p-8 shadow-lg card bg-base-200">
-      <h2 className="mb-6 text-2xl font-bold text-center">🛒 Acceso de Vendedor</h2>
+  return (
+    <div className="relative flex items-center justify-center min-h-screen bg-base-100 text-base-content">
+      {/* Botón de modo claro/oscuro arriba a la derecha */}
+      <div className="absolute top-4 right-4">
+        <ThemeSwitcher />
+      </div>
 
-      <button className="w-full mb-3 text-black btn btn-error" onClick={handleGoogleLogin}>
-        🚀 Iniciar sesión con Google
-      </button>
-
-      <button
-        className="w-full text-white btn btn-outline hover:text-black"
-        onClick={() => navigate("/")}
-      >
-        ⬅ Volver a Home
-      </button>
-
-      {error && (
-        <div className="mt-4 text-sm alert alert-error">
-          {error}
+      <div className="w-full max-w-md p-8 shadow-lg card bg-base-200">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold">🛒 Acceso de Vendedor</h2>
         </div>
-      )}
+
+        <button className="w-full mt-4 btn btn-outline text-base-content hover:bg-base-300" onClick={handleGoogleLogin}>
+          🚀 Iniciar sesión con Google
+        </button>
+
+        <button className="w-full btn btn-outline text-base-content hover:bg-base-300" onClick={() => navigate("/")}>
+
+          ⬅ Volver a Home
+        </button>
+
+        {error && (
+          <div className="mt-4 text-sm alert alert-error">
+            {error}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 }
 
 export default LoginVendedor;

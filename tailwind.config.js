@@ -1,4 +1,4 @@
-import daisyui from "daisyui"
+import daisyui from "daisyui";
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -7,18 +7,26 @@ export default {
     extend: {
       animation: {
         'fade-in-up': 'fadeInUp 0.6s ease-out',
-        'bounce-slow': 'bounce 2s infinite'
+        'bounce-slow': 'bounce 2s infinite',
       },
       keyframes: {
         fadeInUp: {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
-        }
-      }
-    }
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+    },
   },
   plugins: [daisyui],
+  darkMode: "media", // usa el tema del sistema operativo automáticamente
   daisyui: {
-    themes: ["night"],
+    themes: ["light", "night"],
+    darkTheme: "night",
+    base: true,
+    styled: true,
+    utils: true,
+    logs: false,
+    rtl: false,
+    prefix: "",
   },
-}
+};

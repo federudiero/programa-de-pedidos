@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebase/firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import Swal from "sweetalert2";
+import ThemeSwitcher from "../components/ThemeSwitcher";
 
 const repartidoresPermitidos = [
   "repartidor1@gmail.com",
@@ -49,9 +50,14 @@ function LoginRepartidor() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4 bg-base-200">
-      <div className="w-full max-w-md p-8 space-y-4 shadow-xl bg-base-100 rounded-xl">
-        <h3 className="text-2xl font-bold text-center text-white">🚚 Acceso Repartidor</h3>
+    <div className="relative flex items-center justify-center min-h-screen px-4 bg-base-200 text-base-content">
+      {/* 🔘 Theme Switcher */}
+      <div className="absolute top-4 right-4">
+        <ThemeSwitcher />
+      </div>
+
+      <div className="w-full max-w-md p-8 space-y-4 border shadow-xl bg-base-100 border-base-300 rounded-xl">
+        <h3 className="text-2xl font-bold text-center">🚚 Acceso Repartidor</h3>
 
         <input
           type="email"
@@ -71,16 +77,16 @@ function LoginRepartidor() {
         />
 
         <div className="flex flex-col gap-2">
-         <button className="text-white bg-blue-600 btn hover:bg-blue-700" onClick={handleLogin}>
-  🔐 Ingresar
-</button>
-          <button className="text-dark btn btn-error" onClick={handleGoogleLogin}>
+          <button className="w-full mt-4 btn btn-outline text-base-content hover:bg-base-300" onClick={handleLogin}>
+            🔐 Ingresar
+          </button>
+          <button className="w-full mt-4 btn btn-outline text-base-content hover:bg-base-300" onClick={handleGoogleLogin}>
             🚀 Ingresar con Google
           </button>
         </div>
 
         <button
-          className="w-full mt-4 text-dark btn btn-outline hover:text-black"
+          className="w-full mt-4 btn btn-outline"
           onClick={() => navigate("/")}
         >
           ⬅ Volver a Home
