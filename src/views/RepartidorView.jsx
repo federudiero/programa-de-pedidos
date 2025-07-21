@@ -15,8 +15,8 @@ import { FaMapMarkerAlt } from "react-icons/fa";
 import RutaOptimizada from "../components/RutaOptimizada";
 import ListaRutaPasoAPaso from "../components/ListaRutaPasoAPaso";
 import BotonIniciarViaje from "../components/BotonIniciarViaje";
-import RutasDivididas from "../components/RutasDivididas";
-import { BASE_DIRECCION } from "../config.jsx";
+
+import { BASE_COORDENADAS } from "../config.jsx";
 import ThemeSwitcher from "../components/ThemeSwitcher"; // ✅ agregado
 
 
@@ -59,9 +59,11 @@ function RepartidorView() {
     const email = localStorage.getItem("emailRepartidor");
     if (!autorizado || !email) return navigate("/login-repartidor");
 
+    
    
     cargarPedidos(fechaSeleccionada, email);
   }, [fechaSeleccionada]);
+
 
   const marcarEntregado = async (id, entregado) => {
     await updateDoc(doc(db, "pedidos", id), { entregado });
@@ -285,10 +287,22 @@ function RepartidorView() {
 
         <div className="mt-6">
           <h4 className="mb-2 text-xl font-semibold">🗺️ Ruta Optimizada</h4>
-       <RutasDivididas
-  pedidos={pedidosOrdenados}
-  base={{ direccion: BASE_DIRECCION }} // ✅ Así lo convertís a objeto
+      <RutaOptimizada
+  origin={BASE_COORDENADAS}
+  destination={BASE_COORDENADAS}
+  waypoints={pedidosOrdenados}
+  onOrdenOptimizado={(orden) => {
+    pedidosOrdenados.forEach((pedido, indexOriginal) => {
+      const nuevoIndex = orden.indexOf(indexOriginal);
+      if (nuevoIndex !== -1) {
+        updateDoc(doc(db, "pedidos", pedido.id), {
+          ordenRuta: nuevoIndex + 1,
+        });
+      }
+    });
+  }}
 />
+       
     </div>
 
         <ListaRutaPasoAPaso pedidosOrdenados={pedidosOrdenados} />

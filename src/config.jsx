@@ -1,4 +1,1 @@
-// src/config.js
-// src/config.js
-export const BASE_DIRECCION = "Godoy Cruz 1225, La Tablada, Buenos Aires";
-
+export const BASE_COORDENADAS = { lat: -34.7076, lng: -58.5111 };
