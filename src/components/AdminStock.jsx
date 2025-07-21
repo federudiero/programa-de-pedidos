@@ -3,10 +3,12 @@ import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc } from "firebase
 import { db } from "../firebase/firebase";
 import { nanoid } from "nanoid";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
 
 function AdminStock() {
   const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
+  const [filtro, setFiltro] = useState("");
   const [nuevoProducto, setNuevoProducto] = useState({ nombre: "", precio: "", stock: 0, stockMinimo: 10 });
 
   // Detectar modo del sistema y aplicar tema
@@ -21,10 +23,29 @@ function AdminStock() {
     setProductos(data);
   };
 
-  const actualizarProducto = async (producto) => {
+ const actualizarProducto = async (producto) => {
+  try {
     await updateDoc(doc(db, "productos", producto.id), producto);
+    Swal.fire({
+      icon: "success",
+      title: "Guardado",
+      text: `El producto "${producto.nombre}" se guardó correctamente.`,
+      toast: true,
+      position: "top-end",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
     cargarProductos();
-  };
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Hubo un problema al guardar el producto.",
+    });
+  }
+};
 
   const agregarProducto = async () => {
     const id = nanoid();
@@ -46,6 +67,11 @@ function AdminStock() {
   useEffect(() => {
     cargarProductos();
   }, []);
+
+  // Ordenar y filtrar productos
+  const productosFiltrados = productos
+    .filter((p) => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   return (
     <div className="min-h-screen p-6">
@@ -75,8 +101,16 @@ function AdminStock() {
           <button onClick={agregarProducto} className="w-full mt-4 btn btn-success">Agregar producto</button>
         </div>
 
+        <input
+          type="text"
+          placeholder="🔍 Buscar producto..."
+          className="w-full max-w-md mb-6 input input-bordered text-base-content"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)}
+        />
+
         <div className="grid gap-4">
-          {productos.map((prod) => (
+          {productosFiltrados.map((prod) => (
             <div key={prod.id} className="p-4 border shadow bg-base-100 text-base-content rounded-xl">
               <div className="grid gap-2 md:grid-cols-4">
                 <input className="input input-bordered" value={prod.nombre}
@@ -100,9 +134,16 @@ function AdminStock() {
           ))}
         </div>
       </div>
-      <button className="mt-6 hover:text-black btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
-        ⬅ Volver a Administrador
-      </button>
+
+      <div className="flex flex-col gap-4 mt-6 md:flex-row md:justify-between">
+        <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
+          ⬅ Volver a Administrador
+        </button>
+        <div className="flex gap-2">
+          <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
+          <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>📊 Ver Stock</button>
+        </div>
+      </div>
     </div>
   );
 }

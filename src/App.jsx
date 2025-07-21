@@ -9,6 +9,8 @@ import RepartidorView from "./views/RepartidorView";
 import LoginRepartidor from "./views/LoginRepartidor";
 import AdminDivisionPedidos from "./admin/AdminDivisionPedidos";
 import AdminStock from "./components/AdminStock";
+import CierreCaja from "./components/CierreCaja";
+import PanelStock from "./components/PanelStock";
 
 function App() {
   useEffect(() => {
@@ -30,6 +32,8 @@ function App() {
           <Route path="/repartidor" element={<RepartidorView />} />
           <Route path="/admin/dividir-pedidos" element={<AdminDivisionPedidos />} />
           <Route path="/admin/stock" element={<AdminStock />} />
+          <Route path="/admin/cierre-caja" element={<CierreCaja />} />
+<Route path="/admin/panel-stock" element={<PanelStock />} />
         </Routes>
       </Router>
     </div>

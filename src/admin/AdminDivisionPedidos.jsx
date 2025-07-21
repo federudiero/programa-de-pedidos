@@ -22,6 +22,14 @@ function AdminDivisionPedidos() {
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Tema automático claro/oscuro
+  useEffect(() => {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const savedTheme = localStorage.getItem("theme");
+    const initialTheme = savedTheme || (prefersDark ? "night" : "light");
+    document.documentElement.setAttribute("data-theme", initialTheme);
+  }, []);
+
   const repartidores = [
     { label: "R1", email: "repartidor1@gmail.com" },
     { label: "R2", email: "repartidor2@gmail.com" },
@@ -69,44 +77,44 @@ function AdminDivisionPedidos() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <h2 className="text-2xl font-bold mb-4">🗂 División de Pedidos por Repartidor</h2>
+    <div className="max-w-6xl px-4 py-6 mx-auto text-base-content">
+      <h2 className="mb-4 text-2xl font-bold text-black"> División de Pedidos por Repartidor</h2>
 
       <div className="mb-5">
-        <label className="font-semibold mb-1 block">📅 Seleccionar fecha:</label>
+        <label className="block mb-1 font-semibold">📅 Seleccionar fecha:</label>
         <DatePicker
           selected={fechaSeleccionada}
           onChange={(date) => setFechaSeleccionada(date)}
-          className="input input-bordered w-full max-w-sm"
+          className="w-full max-w-sm input input-bordered"
         />
       </div>
 
       {loading ? (
         <p className="text-lg">Cargando pedidos...</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="table table-zebra w-full text-sm">
-            <thead className="bg-base-200 text-base font-bold">
+        <div className="overflow-x-auto shadow-md rounded-xl">
+          <table className="table w-full text-sm border border-base-300">
+            <thead className="bg-base-200 text-base-content">
               <tr>
-                <th>👤 Cliente</th>
-                <th>📌 Dirección</th>
-                <th>📝 Pedido</th>
+                <th className="py-2">👤 Cliente</th>
+                <th className="py-2">📌 Dirección</th>
+                <th className="py-2">📝 Pedido</th>
                 {repartidores.map((r) => (
-                  <th key={r.email} className="text-center">{r.label}</th>
+                  <th key={r.email} className="py-2 text-center">{r.label}</th>
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-base-100">
               {pedidos.map((p) => (
-                <tr key={p.id} className={p.asignadoA?.length > 0 ? "bg-green-100" : ""}>
-                  <td className="font-semibold">{p.nombre}</td>
-                  <td>{p.direccion}</td>
-                  <td className="whitespace-pre-wrap">{p.pedido}</td>
+                <tr key={p.id} className="border-t border-base-300">
+                  <td className="py-2 font-semibold">{p.nombre}</td>
+                  <td className="py-2">{p.direccion}</td>
+                  <td className="py-2 whitespace-pre-wrap">{p.pedido}</td>
                   {repartidores.map((r) => (
-                    <td key={r.email} className="text-center">
+                    <td key={r.email} className="py-2 text-center">
                       <input
                         type="checkbox"
-                        className="checkbox checkbox-sm"
+                        className={`checkbox checkbox-sm rounded ${p.asignadoA?.includes(r.email) ? "border-green-500 bg-green-500" : ""}`}
                         checked={p.asignadoA?.includes(r.email) || false}
                         onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
                       />
@@ -120,7 +128,7 @@ function AdminDivisionPedidos() {
       )}
 
       <button
-        className="btn btn-neutral mt-5"
+        className="mt-5 btn btn-neutral hover:text-black"
         onClick={() => navigate("/admin/pedidos")}
       >
         ⬅ Volver a pedidos
