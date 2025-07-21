@@ -8,8 +8,8 @@ import { startOfDay, endOfDay } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
+import MapaPedidos from "../components/MapaPedidos";
 
-// Repartidores
 const repartidores = [
   { label: "R1", email: "repartidor1@gmail.com" },
   { label: "R2", email: "repartidor2@gmail.com" },
@@ -21,31 +21,12 @@ const repartidores = [
   { label: "R8", email: "repartidor8@gmail.com" },
 ];
 
-// Zonas
-const zonas = {
-  "Zona Sur": ["lanús", "lanus", "lomas", "temperley", "banfield", "avellaneda"],
-  "Zona Este": ["quilmes", "berazategui", "varela", "solano"],
-  "Zona Oeste": ["morón", "moron", "ituzaingó", "ituzaingo", "castelar", "merlo", "laferrere", "san justo", "la tablada"],
-  "CABA": ["caba", "capital", "comuna", "villa devoto", "palermo", "flores", "caballito", "almagro", "recoleta"],
-  "Zona Norte": ["san isidro", "vicente lopez", "tigre", "escobar", "olivos"],
-  "Zona La Plata": ["la plata", "tolosa", "gonnet", "ringuelet"]
-};
-
-const obtenerZona = (direccion) => {
-  if (!direccion) return "Desconocida";
-  const dir = direccion.toLowerCase();
-  for (const [zona, barrios] of Object.entries(zonas)) {
-    if (barrios.some((b) => dir.includes(b))) return zona;
-  }
-  return "Otras";
-};
-
 function AdminDivisionPedidos() {
   const navigate = useNavigate();
+  const [filtro, setFiltro] = useState("");
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [resumenPorZona, setResumenPorZona] = useState({});
 
   const cargarPedidosPorFecha = async (fecha) => {
     setLoading(true);
@@ -55,15 +36,7 @@ function AdminDivisionPedidos() {
     const q = query(pedidosRef, where("fecha", ">=", inicio), where("fecha", "<=", fin));
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-    const resumen = {};
-    data.forEach(p => {
-      const zona = obtenerZona(p.direccion);
-      resumen[zona] = (resumen[zona] || 0) + 1;
-    });
-
     setPedidos(data);
-    setResumenPorZona(resumen);
     setLoading(false);
   };
 
@@ -73,16 +46,13 @@ function AdminDivisionPedidos() {
     else cargarPedidosPorFecha(fechaSeleccionada);
   }, [fechaSeleccionada, navigate]);
 
- const handleAsignar = async (pedidoId, email, asignar) => {
+  const handleAsignar = async (pedidoId, email, asignar = true) => {
   try {
     const pedidoRef = doc(db, "pedidos", pedidoId);
-
     let updateObj;
     if (asignar) {
-      // ✅ Asignar nuevo repartidor reemplazando el anterior
       updateObj = { asignadoA: [email] };
     } else {
-      // ❌ Desasignar (vaciar)
       updateObj = {
         asignadoA: [],
         ordenRuta: deleteField(),
@@ -90,11 +60,28 @@ function AdminDivisionPedidos() {
     }
 
     await updateDoc(pedidoRef, updateObj);
-    cargarPedidosPorFecha(fechaSeleccionada);
+
+    // 🔄 Actualiza solo el pedido modificado en el estado local
+    setPedidos((prev) =>
+  prev.map((p) =>
+    p.id === pedidoId
+      ? {
+          ...p,
+          asignadoA: asignar ? [email] : [],
+          ordenRuta: asignar ? p.ordenRuta : undefined, // mantené si ya había orden
+        }
+      : p
+  )
+);
   } catch (err) {
     console.error("❌ Error al asignar/desasignar repartidor:", err);
   }
 };
+  const pedidosFiltrados = pedidos.filter((p) =>
+    p.nombre?.toLowerCase().includes(filtro.toLowerCase()) ||
+    p.direccion?.toLowerCase().includes(filtro.toLowerCase())
+  );
+
   return (
     <div className="max-w-6xl px-4 py-6 mx-auto text-base-content">
       <h2 className="mb-4 text-2xl font-bold text-black">División de Pedidos por Repartidor</h2>
@@ -106,6 +93,17 @@ function AdminDivisionPedidos() {
             selected={fechaSeleccionada}
             onChange={(date) => setFechaSeleccionada(date)}
             className="w-full max-w-sm input input-bordered"
+          />
+        </div>
+
+        <div className="w-full md:w-auto">
+          <label className="block mb-1 font-semibold">🔎 Buscar:</label>
+          <input
+            type="text"
+            placeholder="Cliente o dirección"
+            className="w-full max-w-sm input input-bordered"
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
           />
         </div>
       </div>
@@ -120,58 +118,38 @@ function AdminDivisionPedidos() {
                 <th>👤 Cliente</th>
                 <th>📌 Dirección</th>
                 <th>📝 Pedido</th>
-                <th>📍 Zona</th>
                 {repartidores.map((r) => (
                   <th key={r.email} className="text-center">{r.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody className="bg-base-100">
-              {pedidos.map((p) => {
-                const zona = obtenerZona(p.direccion);
-                return (
-                  <tr key={p.id} className="border-t border-base-300">
-                    <td>{p.nombre}</td>
-                    <td>{p.direccion}</td>
-                    <td className="whitespace-pre-wrap">{p.pedido}</td>
-                    <td>{zona}</td>
-                    {repartidores.map((r) => (
-                      <td key={r.email} className="text-center">
-                        <input
-                          type="checkbox"
-                          className={`checkbox checkbox-sm ${p.asignadoA?.includes(r.email) ? "bg-green-500" : ""}`}
-                          checked={p.asignadoA?.includes(r.email) || false}
-                          onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                );
-              })}
+              {pedidosFiltrados.map((p) => (
+                <tr key={p.id} className="border-t border-base-300">
+                  <td>{p.nombre}</td>
+                  <td>{p.direccion}</td>
+                  <td className="whitespace-pre-wrap">{p.pedido}</td>
+                  {repartidores.map((r) => (
+                    <td key={r.email} className="text-center">
+                      <input
+                        type="checkbox"
+                        className={`checkbox checkbox-sm ${p.asignadoA?.includes(r.email) ? "bg-green-500" : ""}`}
+                        checked={p.asignadoA?.includes(r.email) || false}
+                        onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       )}
 
-      <div className="mt-8">
-        <h3 className="mb-2 text-lg font-semibold">📊 Pedidos por zona</h3>
-        <table className="table w-full max-w-lg border table-sm bg-base-100 border-base-300">
-          <thead className="bg-base-200 text-base-content">
-            <tr>
-              <th>Zona</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {Object.entries(resumenPorZona).map(([zona, total]) => (
-              <tr key={zona} className="border-t border-base-300">
-                <td>{zona}</td>
-                <td>{total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+    <MapaPedidos
+  pedidos={pedidos.filter(p => !Array.isArray(p.asignadoA) || p.asignadoA.length === 0)}
+  onAsignarRepartidor={handleAsignar}
+/>
 
       <button
         className="mt-6 btn btn-neutral hover:text-black"
