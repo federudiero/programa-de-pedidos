@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebase";
+import { useNavigate } from "react-router-dom";
+  
 
 function PanelStock() {
+  const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [filtro, setFiltro] = useState("");
 
@@ -22,6 +25,9 @@ function PanelStock() {
 
   return (
     <div className="p-6">
+    <button className="btn btn-outline" onClick={() => navigate("/admin/stock")}>
+          ⬅ Volver a Administrador
+        </button>
       <h2 className="mb-4 text-2xl font-bold text-black">📦 Panel de Stock</h2>
 
 <input

@@ -7,7 +7,8 @@ import ThemeSwitcher from "../components/ThemeSwitcher";
 const correosAdmins = [
   "federudiero@gmail.com",
   "admin2@mail.com",
-  "admin3@mail.com"
+  "admin3@mail.com",
+  "franco.coronel.134@gmail.com"
 ];
 
 function AdminLogin() {

@@ -84,7 +84,7 @@ const MapaPedidos = ({ pedidos, onAsignarRepartidor }) => {
       {pedidoSeleccionado && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="w-full max-w-sm p-6 bg-white rounded-lg shadow-xl">
-            <h3 className="mb-2 text-lg font-bold">Asignar repartidor a:</h3>
+            <h3 className="mb-2 text-lg font-bold text-black">Asignar repartidor a:</h3>
             <p className="mb-4 text-sm text-gray-600">{pedidoSeleccionado.nombre}<br />{pedidoSeleccionado.direccion}</p>
 
             <div className="grid grid-cols-2 gap-2 mb-4">

@@ -1,8 +1,10 @@
+// AdminStock.jsx
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { nanoid } from "nanoid";
 import { useNavigate } from "react-router-dom";
+
 import Swal from "sweetalert2";
 
 function AdminStock() {
@@ -11,7 +13,6 @@ function AdminStock() {
   const [filtro, setFiltro] = useState("");
   const [nuevoProducto, setNuevoProducto] = useState({ nombre: "", precio: "", stock: 0, stockMinimo: 10 });
 
-  // Detectar modo del sistema y aplicar tema
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     document.documentElement.setAttribute("data-theme", prefersDark ? "night" : "light");
@@ -23,29 +24,29 @@ function AdminStock() {
     setProductos(data);
   };
 
- const actualizarProducto = async (producto) => {
-  try {
-    await updateDoc(doc(db, "productos", producto.id), producto);
-    Swal.fire({
-      icon: "success",
-      title: "Guardado",
-      text: `El producto "${producto.nombre}" se guardó correctamente.`,
-      toast: true,
-      position: "top-end",
-      showConfirmButton: false,
-      timer: 2000,
-      timerProgressBar: true,
-    });
-    cargarProductos();
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Hubo un problema al guardar el producto.",
-    });
-  }
-};
+  const actualizarProducto = async (producto) => {
+    try {
+      await updateDoc(doc(db, "productos", producto.id), producto);
+      Swal.fire({
+        icon: "success",
+        title: "Guardado",
+        text: `El producto "${producto.nombre}" se guardó correctamente.`,
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      cargarProductos();
+    } catch (error) {
+      console.error(error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Hubo un problema al guardar el producto.",
+      });
+    }
+  };
 
   const agregarProducto = async () => {
     const id = nanoid();
@@ -68,7 +69,6 @@ function AdminStock() {
     cargarProductos();
   }, []);
 
-  // Ordenar y filtrar productos
   const productosFiltrados = productos
     .filter((p) => p.nombre.toLowerCase().includes(filtro.toLowerCase()))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -78,25 +78,55 @@ function AdminStock() {
       <div className="max-w-4xl mx-auto">
         <h2 className="mb-6 text-2xl font-bold">📦 Gestión de Stock</h2>
 
+        <div className="flex flex-col gap-4 mt-6 md:flex-row md:justify-between">
+        <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
+          ⬅ Volver a Administrador
+        </button>
+        <div className="flex gap-2">
+          <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
+          <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>📊 Ver Stock</button>
+        </div>
+      </div>
+
         <div className="p-4 mb-6 border shadow rounded-xl bg-base-100 text-base-content">
-          <h3 className="mb-2 font-semibold">➕ Agregar producto</h3>
-          <div className="grid gap-2 md:grid-cols-4">
-            <input className="input input-bordered" placeholder="Nombre"
-              value={nuevoProducto.nombre}
-              onChange={(e) => setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })}
-            />
-            <input className="input input-bordered" placeholder="Precio" type="number"
-              value={nuevoProducto.precio}
-              onChange={(e) => setNuevoProducto({ ...nuevoProducto, precio: e.target.value })}
-            />
-            <input className="input input-bordered" placeholder="Stock" type="number"
-              value={nuevoProducto.stock}
-              onChange={(e) => setNuevoProducto({ ...nuevoProducto, stock: e.target.value })}
-            />
-            <input className="input input-bordered" placeholder="Stock mínimo" type="number"
-              value={nuevoProducto.stockMinimo}
-              onChange={(e) => setNuevoProducto({ ...nuevoProducto, stockMinimo: e.target.value })}
-            />
+          <h3 className="mb-4 font-semibold">➕ Agregar producto</h3>
+          <div className="grid gap-4 md:grid-cols-4">
+            <div>
+              <label className="label">
+                <span className="label-text">Nombre</span>
+              </label>
+              <input className="w-full input input-bordered"
+                value={nuevoProducto.nombre}
+                onChange={(e) => setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Precio</span>
+              </label>
+              <input className="w-full input input-bordered" type="number"
+                value={nuevoProducto.precio}
+                onChange={(e) => setNuevoProducto({ ...nuevoProducto, precio: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Stock</span>
+              </label>
+              <input className="w-full input input-bordered" type="number"
+                value={nuevoProducto.stock}
+                onChange={(e) => setNuevoProducto({ ...nuevoProducto, stock: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label">
+                <span className="label-text">Stock mínimo</span>
+              </label>
+              <input className="w-full input input-bordered" type="number"
+                value={nuevoProducto.stockMinimo}
+                onChange={(e) => setNuevoProducto({ ...nuevoProducto, stockMinimo: e.target.value })}
+              />
+            </div>
           </div>
           <button onClick={agregarProducto} className="w-full mt-4 btn btn-success">Agregar producto</button>
         </div>
@@ -135,15 +165,7 @@ function AdminStock() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 mt-6 md:flex-row md:justify-between">
-        <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
-          ⬅ Volver a Administrador
-        </button>
-        <div className="flex gap-2">
-          <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
-          <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>📊 Ver Stock</button>
-        </div>
-      </div>
+      
     </div>
   );
 }

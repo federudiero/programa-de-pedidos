@@ -78,10 +78,13 @@ export const productosCatalogo = [
   { nombre: "LÁTEX COLOR Negro  10L", precio: 33000 },
   { nombre: "LÁTEX COLOR Negro  20L", precio: 55000 },
 
+  { nombre: "Entonador 125ml", precio: 2500 },
+  { nombre: "Promo x2 o mas Entonadores", precio: 2000 },
 
-  { nombre: "Envio1", precio: 4500 },
-  { nombre: "Envio2", precio: 5000 },
-  { nombre: "Envio3", precio: 5500 },
+  { nombre: "Envio1", precio: 3500 },
+  { nombre: "Envio2", precio: 4000 },
+  { nombre: "Envio3", precio: 4500 },
+  { nombre: "Envio4", precio: 5000 },
 
 
 ];
