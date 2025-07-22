@@ -16,7 +16,13 @@ const RutaOptimizada = ({ waypoints, onOrdenOptimizado }) => {
     libraries: ["places"],
   });
 
-  const getDireccion = (obj) => obj?.direccion || "";
+  const getDireccion = (obj) => {
+  if (!obj?.direccion) return "";
+  
+  // Si tiene un Plus Code al inicio (ej: "48Q38F69+JX - Godoy Cruz 1300...")
+  const direccionLimpia = obj.direccion.replace(/^(\w{4,}\+\w{2,})\s*-\s*/i, "").trim();
+  return direccionLimpia;
+};
 
   useEffect(() => {
     if (isLoaded && waypoints.length > 0) {
