@@ -207,22 +207,25 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
                 {productosCatalogo.map((prod, idx) => {
                   const cantidad = productosSeleccionados.find(p => p.nombre === prod.nombre)?.cantidad || 0;
                   return (
-                    <div key={idx} className="flex items-center justify-between mb-2">
-                      <span className="w-2/3 truncate">{prod.nombre} - ${prod.precio.toLocaleString()}</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={cantidad}
-                        onChange={(e) => {
-                          const cant = parseInt(e.target.value, 10);
-                          setProductosSeleccionados((prev) => {
-                            const sinEste = prev.filter(p => p.nombre !== prod.nombre);
-                            return cant > 0 ? [...sinEste, { ...prod, cantidad: cant }] : sinEste;
-                          });
-                        }}
-                        className="w-20 input input-bordered input-sm"
-                      />
-                    </div>
+                  <div key={idx} className="flex flex-col mb-4 sm:flex-row sm:items-center sm:justify-between">
+  <div className="text-sm sm:text-base">
+    <span className="block font-medium">{prod.nombre}</span>
+    <span className="block text-gray-500">${prod.precio.toLocaleString()}</span>
+  </div>
+  <input
+    type="number"
+    min="0"
+    value={cantidad}
+    onChange={(e) => {
+      const cant = parseInt(e.target.value, 10);
+      setProductosSeleccionados((prev) => {
+        const sinEste = prev.filter(p => p.nombre !== prod.nombre);
+        return cant > 0 ? [...sinEste, { ...prod, cantidad: cant }] : sinEste;
+      });
+    }}
+    className="w-full mt-2 sm:mt-0 sm:w-20 input input-bordered input-sm"
+  />
+</div>
                   );
                 })}
               </div>
