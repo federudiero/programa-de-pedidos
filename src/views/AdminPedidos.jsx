@@ -90,8 +90,25 @@ function AdminPedidos() {
 
   const guardarCambios = async (pedidoEditado) => {
     try {
-      const { id, ...resto } = pedidoEditado;
-      await updateDoc(doc(db, "pedidos", id), resto);
+      const { id, productos = [], ...resto } = pedidoEditado;
+
+      const resumen = productos
+        .map((p) => `${p.nombre} x${p.cantidad}`)
+        .join(" - ");
+
+      const total = productos.reduce(
+        (acc, p) => acc + (p.precio || 0) * p.cantidad,
+        0
+      );
+
+      const pedidoStr = `${resumen} | TOTAL: $${total}`;
+
+      await updateDoc(doc(db, "pedidos", id), {
+        ...resto,
+        productos,
+        pedido: pedidoStr,
+      });
+
       setModalVisible(false);
       cargarPedidosPorFecha(fechaSeleccionada);
     } catch (error) {
@@ -102,11 +119,50 @@ function AdminPedidos() {
   return (
     <div className="min-h-screen bg-base-100 text-base-content">
       <div className="max-w-6xl px-4 py-6 mx-auto">
+        {/* ENCABEZADO */}
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
           <h2 className="text-2xl font-bold">
             📋 Pedidos del Día - Administrador
           </h2>
-          <div className="flex flex-wrap gap-2">
+
+          {/* Navbar responsive */}
+          <div className="dropdown dropdown-end md:hidden">
+            <button tabIndex={0} className="btn btn-outline">
+              ☰ Menú
+            </button>
+            <ul
+              tabIndex={0}
+              className="z-10 p-2 shadow dropdown-content menu bg-base-200 rounded-box w-52"
+            >
+              <li>
+                <button onClick={cerrarSesion}>🔓 Cerrar sesión</button>
+              </li>
+              <li>
+                <button onClick={() => navigate("/admin/dividir-pedidos")}>
+                  🗂 División de Pedidos
+                </button>
+              </li>
+              <li>
+                <button onClick={() => navigate("/admin/stock")}>
+                  🧾 Ver Stock
+                </button>
+              </li>
+              <li>
+                <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>
+              📦 Ir a Cierre de Caja
+            </button>
+              </li>
+              <li>
+                <button onClick={() => navigate("/")}>⬅ Volver a Home</button>
+              </li>
+              <li>
+                <ThemeSwitcher />
+              </li>
+            </ul>
+          </div>
+
+          {/* Barra visible en escritorio */}
+          <div className="flex-wrap hidden gap-2 md:flex">
             <ThemeSwitcher />
             <button
               className="btn btn-error btn-outline"
@@ -126,12 +182,20 @@ function AdminPedidos() {
             >
               🧾 Ver Stock
             </button>
+            <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>
+              📦 Ir a Cierre de Caja
+            </button>
+            <button onClick={() => navigate("/admin/estadisticas")} className="btn btn-outline">
+  📈 Ver estadísticas
+</button>
+
             <button className="btn btn-outline" onClick={() => navigate("/")}>
               ⬅ Volver a Home
             </button>
           </div>
         </div>
 
+        {/* Fecha */}
         <div className="mb-6">
           <label className="block mb-2 font-semibold text-base-content">
             📅 Seleccionar fecha:
@@ -143,6 +207,7 @@ function AdminPedidos() {
           />
         </div>
 
+        {/* Tabla o estado */}
         {loading ? (
           <div className="mt-10 text-center">
             <span className="loading loading-spinner loading-lg text-primary"></span>

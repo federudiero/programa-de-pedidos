@@ -23,6 +23,7 @@ import ThemeSwitcher from "../components/ThemeSwitcher"; // ✅ agregado
 function RepartidorView() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
+  const [cierreRealizado, setCierreRealizado] = useState(false);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [gastoExtra, setGastoExtra] = useState(0);
  
@@ -51,6 +52,9 @@ function RepartidorView() {
   const fechaId = format(fecha, 'yyyy-MM-dd');
   const gastoDoc = await getDoc(doc(db, "gastosReparto", fechaId));
   setGastoExtra(gastoDoc.exists() ? gastoDoc.data().monto || 0 : 0);
+
+  const cierreDoc = await getDoc(doc(db, "cierresRepartidor", `${email}_${fechaId}`));
+setCierreRealizado(cierreDoc.exists());
 };
 
 
@@ -154,6 +158,43 @@ function RepartidorView() {
 
   const instrucciones = JSON.parse(localStorage.getItem("instruccionesRuta") || "[]");
 
+  const finalizarRepartoYEnviarCaja = async () => {
+  const email = localStorage.getItem("emailRepartidor");
+  const fechaId = format(fechaSeleccionada, "yyyy-MM-dd");
+
+  const yaExiste = await getDoc(doc(db, "cierresRepartidor", `${email}_${fechaId}`));
+  if (yaExiste.exists()) {
+    alert("Ya cerraste tu caja para hoy.");
+    return;
+  }
+
+  const confirm = window.confirm("¿Confirmás que finalizaste el reparto?");
+  if (!confirm) return;
+
+  // Marcar todos como cerrados
+  await Promise.all(
+    pedidos.filter(p => p.entregado).map(p =>
+      updateDoc(doc(db, "pedidos", p.id), {
+        cerradoPorRepartidor: true
+      })
+    )
+  );
+
+  // Guardar cierre
+  await setDoc(doc(db, "cierresRepartidor", `${email}_${fechaId}`), {
+    repartidor: email,
+    fecha: fechaSeleccionada,
+    totalEfectivo: totales.totalEfectivo,
+    totalTransferencia: totales.totalTransferencia,
+    totalTarjeta: totales.totalTarjeta,
+    gastoExtra,
+    totalNeto: totales.totalFinal,
+    creado: new Date(),
+  });
+
+  alert("✅ Reparto cerrado y caja enviada al administrador.");
+};
+
   return (
     <div className="min-h-screen p-4 bg-base-100 text-base-content">
     <div className="absolute top-4 right-4">
@@ -183,67 +224,75 @@ function RepartidorView() {
         )}
 
         <div className="grid gap-4 mt-4 lg:grid-cols-3 md:grid-cols-2">
-          {pedidosOrdenados.map((p, i) => (
-            <div key={p.id} className="border-l-4 shadow-md card bg-base-200 border-primary">
-              <div className="space-y-2 card-body">
-                <h3 className="font-bold text-primary">📦 Pedido #{p.ordenRuta || i + 1}</h3>
-                <p><b>👤 Nombre:</b> {p.nombre}</p>
-                <p><b>📍 Dirección:</b> {p.direccion}{" "}
-                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.direccion)}`} target="_blank" rel="noreferrer">
-                    <FaMapMarkerAlt className="inline text-red-500" />
-                  </a>
-                </p>
-                <p><b>📱 Teléfono:</b> {p.telefono}</p>
-                <p><b>📝 Pedido:</b> <span className="font-bold text-success">{p.pedido}</span></p>
+  {pedidosOrdenados.map((p, i) => (
+    <div key={p.id} className="border-l-4 shadow-md card bg-base-200 border-primary">
+      <div className="space-y-2 card-body">
+        <h3 className="font-bold text-primary">📦 Pedido #{p.ordenRuta || i + 1}</h3>
+        <p><b>👤 Nombre:</b> {p.nombre}</p>
+        <p><b>📍 Dirección:</b> {p.direccion}{" "}
+          <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.direccion)}`} target="_blank" rel="noreferrer">
+            <FaMapMarkerAlt className="inline text-red-500" />
+          </a>
+        </p>
+        <p><b>📱 Teléfono:</b> {p.telefono}</p>
+        <p><b>📝 Pedido:</b> <span className="font-bold text-success">{p.pedido}</span></p>
 
-                <button
-                  className={`btn btn-sm w-full ${p.entregado ? "btn-success" : "btn-error"}`}
-                  onClick={() => marcarEntregado(p.id, !p.entregado)}
-                >
-                  {p.entregado ? "✅ Entregado" : "🚫 No entregado"}
-                </button>
+        <button
+          className={`btn btn-sm w-full ${p.entregado ? "btn-success" : "btn-error"}`}
+          onClick={() => marcarEntregado(p.id, !p.entregado)}
+          disabled={cierreRealizado}
+        >
+          {p.entregado ? "✅ Entregado" : "🚫 No entregado"}
+        </button>
 
-                <a
-                  href={`https://wa.me/${p.telefono}?text=Hola ${p.nombre}, tu pedido ya está en camino 🚚`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 btn btn-sm btn-info"
-                >
-                  📲 Avisar por WhatsApp
-                </a>
+        <a
+          href={`https://wa.me/${p.telefono}?text=Hola ${p.nombre}, tu pedido ya está en camino 🚚`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 btn btn-sm btn-info"
+        >
+          📲 Avisar por WhatsApp
+        </a>
 
-                <div className="form-control">
-                  <label className="label"><span className="label-text">💰 Método de pago</span></label>
-                  <select className="select select-bordered" value={p.metodoPago || ""} onChange={(e) => actualizarMetodoPago(p.id, e.target.value)}>
-                    <option value="">Seleccionar</option>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                    <option value="tarjeta">Tarjeta</option>
-                  </select>
-                </div>
-
-                {(p.metodoPago === "transferencia" || p.metodoPago === "tarjeta") && (
-                  <input
-                    type="text"
-                    className="mt-2 input input-bordered"
-                    placeholder="N° comprobante"
-                    value={p.comprobante || ""}
-                    onChange={(e) => actualizarComprobante(p.id, e.target.value)}
-                  />
-                )}
-
-                <div className="form-control">
-                  <label className="label"><span className="label-text">📝 Notas del repartidor</span></label>
-                  <textarea
-                    className="textarea textarea-bordered"
-                    value={p.notasRepartidor || ""}
-                    onChange={(e) => actualizarNotas(p.id, e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+        <div className="form-control">
+          <label className="label"><span className="label-text">💰 Método de pago</span></label>
+          <select
+            className="select select-bordered"
+            value={p.metodoPago || ""}
+            onChange={(e) => actualizarMetodoPago(p.id, e.target.value)}
+            disabled={cierreRealizado}
+          >
+            <option value="">Seleccionar</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+          </select>
         </div>
+
+        {(p.metodoPago === "transferencia" || p.metodoPago === "tarjeta") && (
+          <input
+            type="text"
+            className="mt-2 input input-bordered"
+            placeholder="N° comprobante"
+            value={p.comprobante || ""}
+            onChange={(e) => actualizarComprobante(p.id, e.target.value)}
+            disabled={cierreRealizado}
+          />
+        )}
+
+        <div className="form-control">
+          <label className="label"><span className="label-text">📝 Notas del repartidor</span></label>
+          <textarea
+            className="textarea textarea-bordered"
+            value={p.notasRepartidor || ""}
+            onChange={(e) => actualizarNotas(p.id, e.target.value)}
+            disabled={cierreRealizado}
+          />
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
 
         <div className="my-6 space-y-2">
           <h3 className="text-xl font-semibold">🧭 Instrucciones paso a paso</h3>
@@ -312,6 +361,13 @@ function RepartidorView() {
           <button className="btn btn-success" onClick={exportarEntregadosAExcel}>
             📥 Exportar entregados a Excel
           </button>
+         <button
+  className="mt-6 btn btn-primary"
+  onClick={finalizarRepartoYEnviarCaja}
+  disabled={cierreRealizado}
+>
+  📦 Finalizar Reparto y Enviar Caja
+</button>
           <button className="btn btn-outline btn-error" onClick={() => {
             localStorage.removeItem("repartidorAutenticado");
             localStorage.removeItem("emailRepartidor");

@@ -4,7 +4,6 @@ import { db, auth } from "../firebase/firebase";
 import PedidoTabla from "../components/PedidoTabla";
 import ThemeSwitcher from "../components/ThemeSwitcher";
 
-
 import {
   collection,
   addDoc,
@@ -24,6 +23,7 @@ import "react-datepicker/dist/react-datepicker.css";
 
 function VendedorView() {
   const [usuario, setUsuario] = useState(null);
+  const [estaCerrado, setEstaCerrado] = useState(false);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [cantidadPedidos, setCantidadPedidos] = useState(0);
   const [pedidos, setPedidos] = useState([]);
@@ -45,8 +45,15 @@ function VendedorView() {
     if (usuario) {
       cargarCantidadPedidos(fechaSeleccionada);
       cargarPedidos(fechaSeleccionada);
+      verificarCierreDelDia(fechaSeleccionada);
     }
   }, [fechaSeleccionada, usuario]);
+
+  useEffect(() => {
+    if (estaCerrado && pedidoAEditar) {
+      setPedidoAEditar(null);
+    }
+  }, [estaCerrado, pedidoAEditar]);
 
   const cargarCantidadPedidos = async (fecha) => {
     const inicio = Timestamp.fromDate(startOfDay(fecha));
@@ -110,18 +117,25 @@ function VendedorView() {
     navigate("/login-vendedor");
   };
 
+  const verificarCierreDelDia = async (fecha) => {
+    const fechaStr = format(fecha, "yyyy-MM-dd");
+    const cierreDoc = await getDocs(
+      query(collection(db, "cierres"), where("fechaStr", "==", fechaStr))
+    );
+    const cerrado = !cierreDoc.empty;
+    setEstaCerrado(cerrado);
+    if (cerrado) setPedidoAEditar(null);
+  };
+
   return (
     <div className="min-h-screen bg-base-200 text-base-content" data-theme="night">
       <div className="max-w-screen-xl px-4 py-6 mx-auto">
         <div className="flex flex-col items-center justify-between gap-4 mb-8 md:flex-row">
           <h2 className="text-2xl font-bold">🎨 Sistema de Pedidos - Pinturería</h2>
-         <div className="flex gap-2">
-  <ThemeSwitcher />
-  <button className="btn btn-error" onClick={handleLogout}>
-    Cerrar sesión
-  </button>
-</div>
-
+          <div className="flex gap-2">
+            <ThemeSwitcher />
+            <button className="btn btn-error" onClick={handleLogout}>Cerrar sesión</button>
+          </div>
         </div>
 
         <div className="mb-6">
@@ -138,20 +152,27 @@ function VendedorView() {
         </div>
 
         <div className="p-6 mb-6 border shadow bg-base-100 border-base-300 rounded-xl">
-          <PedidoForm
-            onAgregar={agregarPedido}
-            onActualizar={actualizarPedido}
-            pedidoAEditar={pedidoAEditar}
-          />
+         <PedidoForm
+  onAgregar={agregarPedido}
+  onActualizar={actualizarPedido}
+  pedidoAEditar={pedidoAEditar}
+  bloqueado={estaCerrado}
+/>
 
-          {pedidoAEditar && (
-            <button
-              className="w-full mt-4 btn btn-outline"
-              onClick={() => setPedidoAEditar(null)}
-            >
-              ❌ Cancelar edición
-            </button>
-          )}
+{!estaCerrado && pedidoAEditar && (
+  <button
+    className="w-full mt-4 btn btn-outline"
+    onClick={() => setPedidoAEditar(null)}
+  >
+    ❌ Cancelar edición
+  </button>
+)}
+
+{estaCerrado && (
+  <div className="p-4 mt-4 text-sm text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
+    🛑 El día ya fue cerrado. No se pueden agregar ni editar pedidos.
+  </div>
+)}
         </div>
 
         <div className="p-6 border shadow bg-base-100 border-base-300 rounded-xl">
@@ -160,6 +181,7 @@ function VendedorView() {
             pedidos={pedidos}
             onEditar={setPedidoAEditar}
             onEliminar={eliminarPedido}
+            bloqueado={estaCerrado}
           />
         </div>
       </div>

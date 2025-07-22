@@ -1,17 +1,20 @@
-// AdminStock.jsx
 import React, { useEffect, useState } from "react";
 import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { nanoid } from "nanoid";
 import { useNavigate } from "react-router-dom";
-
 import Swal from "sweetalert2";
 
 function AdminStock() {
   const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [filtro, setFiltro] = useState("");
-  const [nuevoProducto, setNuevoProducto] = useState({ nombre: "", precio: "", stock: 0, stockMinimo: 10 });
+  const [nuevoProducto, setNuevoProducto] = useState({
+    nombre: "",
+    precio: "",
+    stock: 0,
+    stockMinimo: 10,
+  });
 
   useEffect(() => {
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -54,7 +57,7 @@ function AdminStock() {
       nombre: nuevoProducto.nombre,
       precio: parseInt(nuevoProducto.precio),
       stock: parseInt(nuevoProducto.stock),
-      stockMinimo: parseInt(nuevoProducto.stockMinimo)
+      stockMinimo: parseInt(nuevoProducto.stockMinimo),
     });
     setNuevoProducto({ nombre: "", precio: "", stock: 0, stockMinimo: 10 });
     cargarProductos();
@@ -74,20 +77,48 @@ function AdminStock() {
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   return (
-    <div className="min-h-screen p-6">
+    <div className="min-h-screen p-6 bg-base-100 text-base-content">
       <div className="max-w-4xl mx-auto">
-        <h2 className="mb-6 text-2xl font-bold">📦 Gestión de Stock</h2>
+        {/* Título y Navbar Responsive */}
+        <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
+          <h2 className="text-2xl font-bold">📦 Gestión de Stock</h2>
 
-        <div className="flex flex-col gap-4 mt-6 md:flex-row md:justify-between">
-        <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
-          ⬅ Volver a Administrador
-        </button>
-        <div className="flex gap-2">
-          <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
-          <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>📊 Ver Stock</button>
+          {/* Menú hamburguesa (móvil) */}
+          <div className="dropdown dropdown-end md:hidden">
+            <button tabIndex={0} className="btn btn-outline">
+              ☰ Menú
+            </button>
+            <ul
+              tabIndex={0}
+              className="z-10 p-2 shadow dropdown-content menu bg-base-200 rounded-box w-52"
+            >
+              <li>
+                <button onClick={() => navigate("/admin/pedidos")}>⬅ Volver a Administrador</button>
+              </li>
+              <li>
+                <button onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
+              </li>
+              <li>
+                <button onClick={() => navigate("/admin/panel-stock")}>📊 Ver Stock</button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Menú horizontal (escritorio) */}
+          <div className="hidden gap-2 md:flex">
+            <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
+              ⬅ Volver a Administrador
+            </button>
+            <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>
+              📦 Ir a Cierre de Caja
+            </button>
+            <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>
+              📊 Ver Stock
+            </button>
+          </div>
         </div>
-      </div>
 
+        {/* Formulario agregar producto */}
         <div className="p-4 mb-6 border shadow rounded-xl bg-base-100 text-base-content">
           <h3 className="mb-4 font-semibold">➕ Agregar producto</h3>
           <div className="grid gap-4 md:grid-cols-4">
@@ -95,42 +126,63 @@ function AdminStock() {
               <label className="label">
                 <span className="label-text">Nombre</span>
               </label>
-              <input className="w-full input input-bordered"
+              <input
+                className="w-full input input-bordered"
                 value={nuevoProducto.nombre}
-                onChange={(e) => setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })}
+                onChange={(e) =>
+                  setNuevoProducto({ ...nuevoProducto, nombre: e.target.value })
+                }
               />
             </div>
             <div>
               <label className="label">
                 <span className="label-text">Precio</span>
               </label>
-              <input className="w-full input input-bordered" type="number"
+              <input
+                className="w-full input input-bordered"
+                type="number"
                 value={nuevoProducto.precio}
-                onChange={(e) => setNuevoProducto({ ...nuevoProducto, precio: e.target.value })}
+                onChange={(e) =>
+                  setNuevoProducto({ ...nuevoProducto, precio: e.target.value })
+                }
               />
             </div>
             <div>
               <label className="label">
                 <span className="label-text">Stock</span>
               </label>
-              <input className="w-full input input-bordered" type="number"
+              <input
+                className="w-full input input-bordered"
+                type="number"
                 value={nuevoProducto.stock}
-                onChange={(e) => setNuevoProducto({ ...nuevoProducto, stock: e.target.value })}
+                onChange={(e) =>
+                  setNuevoProducto({ ...nuevoProducto, stock: e.target.value })
+                }
               />
             </div>
             <div>
               <label className="label">
                 <span className="label-text">Stock mínimo</span>
               </label>
-              <input className="w-full input input-bordered" type="number"
+              <input
+                className="w-full input input-bordered"
+                type="number"
                 value={nuevoProducto.stockMinimo}
-                onChange={(e) => setNuevoProducto({ ...nuevoProducto, stockMinimo: e.target.value })}
+                onChange={(e) =>
+                  setNuevoProducto({
+                    ...nuevoProducto,
+                    stockMinimo: e.target.value,
+                  })
+                }
               />
             </div>
           </div>
-          <button onClick={agregarProducto} className="w-full mt-4 btn btn-success">Agregar producto</button>
+          <button onClick={agregarProducto} className="w-full mt-4 btn btn-success">
+            Agregar producto
+          </button>
         </div>
 
+        {/* Buscador */}
         <input
           type="text"
           placeholder="🔍 Buscar producto..."
@@ -139,33 +191,71 @@ function AdminStock() {
           onChange={(e) => setFiltro(e.target.value)}
         />
 
+        {/* Lista de productos */}
         <div className="grid gap-4">
           {productosFiltrados.map((prod) => (
             <div key={prod.id} className="p-4 border shadow bg-base-100 text-base-content rounded-xl">
               <div className="grid gap-2 md:grid-cols-4">
-                <input className="input input-bordered" value={prod.nombre}
-                  onChange={(e) => setProductos(p => p.map(pr => pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))}
+                <input
+                  className="input input-bordered"
+                  value={prod.nombre}
+                  onChange={(e) =>
+                    setProductos((p) =>
+                      p.map((pr) => (pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))
+                    )
+                  }
                 />
-                <input className="input input-bordered" type="number" value={prod.precio}
-                  onChange={(e) => setProductos(p => p.map(pr => pr.id === prod.id ? { ...pr, precio: parseInt(e.target.value) } : pr))}
+                <input
+                  className="input input-bordered"
+                  type="number"
+                  value={prod.precio}
+                  onChange={(e) =>
+                    setProductos((p) =>
+                      p.map((pr) =>
+                        pr.id === prod.id ? { ...pr, precio: parseInt(e.target.value) } : pr
+                      )
+                    )
+                  }
                 />
-                <input className="input input-bordered" type="number" value={prod.stock}
-                  onChange={(e) => setProductos(p => p.map(pr => pr.id === prod.id ? { ...pr, stock: parseInt(e.target.value) } : pr))}
+                <input
+                  className="input input-bordered"
+                  type="number"
+                  value={prod.stock}
+                  onChange={(e) =>
+                    setProductos((p) =>
+                      p.map((pr) =>
+                        pr.id === prod.id ? { ...pr, stock: parseInt(e.target.value) } : pr
+                      )
+                    )
+                  }
                 />
-                <input className="input input-bordered" type="number" value={prod.stockMinimo}
-                  onChange={(e) => setProductos(p => p.map(pr => pr.id === prod.id ? { ...pr, stockMinimo: parseInt(e.target.value) } : pr))}
+                <input
+                  className="input input-bordered"
+                  type="number"
+                  value={prod.stockMinimo}
+                  onChange={(e) =>
+                    setProductos((p) =>
+                      p.map((pr) =>
+                        pr.id === prod.id
+                          ? { ...pr, stockMinimo: parseInt(e.target.value) }
+                          : pr
+                      )
+                    )
+                  }
                 />
               </div>
               <div className="flex justify-end gap-2 mt-2">
-                <button className="btn btn-warning btn-sm" onClick={() => actualizarProducto(prod)}>💾 Guardar</button>
-                <button className="btn btn-error btn-sm" onClick={() => eliminarProducto(prod.id)}>🗑️ Eliminar</button>
+                <button className="btn btn-warning btn-sm" onClick={() => actualizarProducto(prod)}>
+                  💾 Guardar
+                </button>
+                <button className="btn btn-error btn-sm" onClick={() => eliminarProducto(prod.id)}>
+                  🗑️ Eliminar
+                </button>
               </div>
             </div>
           ))}
         </div>
       </div>
-
-      
     </div>
   );
 }

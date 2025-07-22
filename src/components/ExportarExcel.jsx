@@ -4,17 +4,24 @@ import { format } from "date-fns";
 
 const ExportarExcel = ({ pedidos }) => {
   const exportar = () => {
-    const wsData = pedidos.map((p) => [
-      p.nombre || "",
-      "Buenos Aires",
-      p.partido || "",
-      "", // ORDEN vacío
-      p.direccion || "",
-      p.telefono || "",
-      "feder",
-      p.pedido || "",
-      p.entreCalles || ""
-    ]);
+    const wsData = pedidos.map((p) => {
+      const productosDetalle = Array.isArray(p.productos)
+        ? p.productos.map((prod) => `${prod.nombre} x${prod.cantidad}`).join(", ")
+        : "";
+
+      return [
+        p.nombre || "",
+        "Buenos Aires",
+        p.partido || "",
+        "", // ORDEN vacío
+        p.direccion || "",
+        p.telefono || "",
+        p.vendedorEmail || "feder",
+        p.pedido || "",
+        p.entreCalles || "",
+        productosDetalle
+      ];
+    });
 
     const encabezados = [
       [
@@ -26,7 +33,8 @@ const ExportarExcel = ({ pedidos }) => {
         "TELEFONO",
         "VENDEDOR",
         "PEDIDO",
-        "OBSERVACION"
+        "OBSERVACION",
+        "PRODUCTOS (detalle array)"
       ]
     ];
 
@@ -46,7 +54,7 @@ const ExportarExcel = ({ pedidos }) => {
   };
 
   return (
-    <button onClick={exportar} className="btn btn-success mt-4">
+    <button onClick={exportar} className="mt-4 btn btn-success">
       📥 Descargar Excel
     </button>
   );

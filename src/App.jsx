@@ -11,12 +11,12 @@ import AdminDivisionPedidos from "./admin/AdminDivisionPedidos";
 import AdminStock from "./components/AdminStock";
 import CierreCaja from "./components/CierreCaja";
 import PanelStock from "./components/PanelStock";
+import EstadisticasPanel from "./components/EstadisticasPanel";
 
 function App() {
   useEffect(() => {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const theme = prefersDark ? "night" : "light";
-    document.documentElement.setAttribute("data-theme", theme);
+    // Forzar el uso del tema fijo 'pedidos'
+    document.documentElement.setAttribute("data-theme", "pedidos");
   }, []);
 
   return (
@@ -33,7 +33,8 @@ function App() {
           <Route path="/admin/dividir-pedidos" element={<AdminDivisionPedidos />} />
           <Route path="/admin/stock" element={<AdminStock />} />
           <Route path="/admin/cierre-caja" element={<CierreCaja />} />
-<Route path="/admin/panel-stock" element={<PanelStock />} />
+          <Route path="/admin/panel-stock" element={<PanelStock />} />
+          <Route path="/admin/estadisticas" element={<EstadisticasPanel />} />
         </Routes>
       </Router>
     </div>

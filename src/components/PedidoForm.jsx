@@ -2,10 +2,9 @@ import React, { useRef, useState, useEffect } from "react";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import Swal from "sweetalert2";
-import { productosCatalogo } from '../components/productosCatalogo';
+import { productosCatalogo } from "../components/productosCatalogo";
 
-
-const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
+const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
   const autoCompleteRef = useRef(null);
   const [productosSeleccionados, setProductosSeleccionados] = useState([]);
   const [coordenadas, setCoordenadas] = useState(null);
@@ -80,6 +79,8 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
   };
 
   const onSubmit = () => {
+    if (bloqueado) return;
+
     if (
       !nombre.trim() ||
       !telefono.trim() ||
@@ -102,6 +103,10 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
       entreCalles,
       pedido: pedidoFinal,
       coordenadas,
+      productos: productosSeleccionados.map(p => ({
+        nombre: p.nombre,
+        cantidad: p.cantidad
+      })),
     };
 
     if (pedidoAEditar) {
@@ -117,7 +122,11 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
 
   return isLoaded ? (
     <>
-     
+      {bloqueado && (
+        <div className="p-4 mb-4 text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
+          🛑 El día fue cerrado. Solo podés visualizar el formulario.
+        </div>
+      )}
 
       <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -138,18 +147,23 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
                   setNombre(val);
                   setErrorNombre(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val) ? "" : "❌ Solo letras y espacios.");
                 }}
+                disabled={bloqueado}
               />
               {errorNombre && <p className="text-sm text-error">{errorNombre}</p>}
 
               <label className="label">
                 <span className="label-text">🏠 Calle y altura</span>
               </label>
-              <Autocomplete onLoad={(a) => (autoCompleteRef.current = a)} onPlaceChanged={handlePlaceChanged}>
+              <Autocomplete
+                onLoad={(a) => (autoCompleteRef.current = a)}
+                onPlaceChanged={handlePlaceChanged}
+              >
                 <input
                   className="w-full input input-bordered"
                   value={direccion}
                   onChange={(e) => setDireccion(e.target.value)}
                   placeholder="Buscar dirección"
+                  disabled={bloqueado}
                 />
               </Autocomplete>
 
@@ -169,6 +183,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
                 className="w-full input input-bordered"
                 value={entreCalles}
                 onChange={(e) => setEntreCalles(e.target.value)}
+                disabled={bloqueado}
               />
 
               <label className="label">
@@ -179,6 +194,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
                 className="w-full input input-bordered"
                 value={partido}
                 onChange={(e) => setPartido(e.target.value)}
+                disabled={bloqueado}
               />
 
               <label className="label">
@@ -193,6 +209,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
                   setTelefono(val);
                   setErrorTelefono(/^[0-9]{6,15}$/.test(val) ? "" : "❌ Solo números (6 a 15 dígitos).");
                 }}
+                disabled={bloqueado}
               />
               {errorTelefono && <p className="text-sm text-error">{errorTelefono}</p>}
             </div>
@@ -207,25 +224,26 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
                 {productosCatalogo.map((prod, idx) => {
                   const cantidad = productosSeleccionados.find(p => p.nombre === prod.nombre)?.cantidad || 0;
                   return (
-                  <div key={idx} className="flex flex-col mb-4 sm:flex-row sm:items-center sm:justify-between">
-  <div className="text-sm sm:text-base">
-    <span className="block font-medium">{prod.nombre}</span>
-    <span className="block text-gray-500">${prod.precio.toLocaleString()}</span>
-  </div>
-  <input
-    type="number"
-    min="0"
-    value={cantidad}
-    onChange={(e) => {
-      const cant = parseInt(e.target.value, 10);
-      setProductosSeleccionados((prev) => {
-        const sinEste = prev.filter(p => p.nombre !== prod.nombre);
-        return cant > 0 ? [...sinEste, { ...prod, cantidad: cant }] : sinEste;
-      });
-    }}
-    className="w-full mt-2 sm:mt-0 sm:w-20 input input-bordered input-sm"
-  />
-</div>
+                    <div key={idx} className="flex flex-col mb-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="text-sm sm:text-base">
+                        <span className="block font-medium">{prod.nombre}</span>
+                        <span className="block text-gray-500">${prod.precio.toLocaleString()}</span>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={cantidad}
+                        onChange={(e) => {
+                          const cant = parseInt(e.target.value, 10);
+                          setProductosSeleccionados((prev) => {
+                            const sinEste = prev.filter(p => p.nombre !== prod.nombre);
+                            return cant > 0 ? [...sinEste, { ...prod, cantidad: cant }] : sinEste;
+                          });
+                        }}
+                        className="w-full mt-2 sm:mt-0 sm:w-20 input input-bordered input-sm"
+                        disabled={bloqueado}
+                      />
+                    </div>
                   );
                 })}
               </div>
@@ -246,6 +264,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar }) => {
               <button
                 type="submit"
                 className={`btn mt-6 w-full ${pedidoAEditar ? "btn-warning" : "btn-success"}`}
+                disabled={bloqueado}
               >
                 {pedidoAEditar ? "✏️ Actualizar Pedido" : "✅ Agregar Pedido"}
               </button>

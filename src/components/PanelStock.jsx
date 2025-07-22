@@ -26,7 +26,7 @@ function PanelStock() {
   return (
     <div className="p-6">
     <button className="btn btn-outline" onClick={() => navigate("/admin/stock")}>
-          ⬅ Volver a Administrador
+          ⬅ Volver a AdminStock
         </button>
       <h2 className="mb-4 text-2xl font-bold text-black">📦 Panel de Stock</h2>
 
