@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { auth, googleProvider } from "../firebase/firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import Swal from "sweetalert2";
-import ThemeSwitcher from "../components/ThemeSwitcher";
 
 // Lista de emails permitidos
 const repartidoresPermitidos = Array.from({ length: 8 }, (_, i) => `repartidor${i + 1}@gmail.com`);
@@ -46,10 +45,6 @@ function LoginRepartidor() {
 
   return (
     <div className="relative flex items-center justify-center min-h-screen px-4 bg-base-200 text-base-content">
-      <div className="absolute top-4 right-4">
-        <ThemeSwitcher />
-      </div>
-
       <div className="w-full max-w-md p-8 space-y-4 border shadow-xl bg-base-100 border-base-300 rounded-xl">
         <h3 className="text-2xl font-bold text-center">🚚 Acceso Repartidor</h3>
 
@@ -67,14 +62,14 @@ function LoginRepartidor() {
 
         <div className="flex flex-col gap-2">
           <button
-            className="w-full mt-4 btn btn-outline text-base-content hover:bg-base-300"
+            className="w-full btn btn-outline text-base-content hover:bg-base-300"
             onClick={handleLogin}
           >
             🔐 Ingresar (clave1234)
           </button>
 
           <button
-            className="w-full mt-4 btn btn-outline text-base-content hover:bg-base-300"
+            className="w-full btn btn-outline text-base-content hover:bg-base-300"
             onClick={handleGoogleLogin}
           >
             🚀 Ingresar con Google
@@ -82,7 +77,7 @@ function LoginRepartidor() {
         </div>
 
         <button
-          className="w-full mt-4 btn btn-outline"
+          className="w-full btn btn-outline"
           onClick={() => navigate("/")}
         >
           ⬅ Volver a Home

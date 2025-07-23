@@ -121,7 +121,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
   };
 
   return isLoaded ? (
-    <>
+    <div className="px-4 py-6">
       {bloqueado && (
         <div className="p-4 mb-4 text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
           🛑 El día fue cerrado. Solo podés visualizar el formulario.
@@ -133,7 +133,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
           {/* DATOS DEL CLIENTE */}
           <div className="shadow-lg card bg-base-200">
             <div className="card-body">
-              <h2 className="card-title">🧑 Datos del cliente</h2>
+              <h2 className="text-xl font-bold">🧑 Datos del cliente</h2>
 
               <label className="label">
                 <span className="label-text">👤 Nombre</span>
@@ -169,7 +169,11 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
 
               {coordenadas && (
                 <div className="h-48 my-4 overflow-hidden border rounded-lg border-base-300">
-                  <GoogleMap mapContainerStyle={{ width: "100%", height: "100%" }} center={coordenadas} zoom={16}>
+                  <GoogleMap
+                    mapContainerStyle={{ width: "100%", height: "100%" }}
+                    center={coordenadas}
+                    zoom={16}
+                  >
                     <Marker position={coordenadas} />
                   </GoogleMap>
                 </div>
@@ -218,7 +222,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
           {/* PRODUCTOS */}
           <div className="shadow-lg card bg-base-200">
             <div className="card-body">
-              <h2 className="card-title">🛒 Productos</h2>
+              <h2 className="text-xl font-bold">🛒 Productos</h2>
 
               <div className="p-2 overflow-y-auto border rounded-lg bg-base-100 border-base-300 h-72">
                 {productosCatalogo.map((prod, idx) => {
@@ -240,7 +244,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
                             return cant > 0 ? [...sinEste, { ...prod, cantidad: cant }] : sinEste;
                           });
                         }}
-                        className="w-full mt-2 sm:mt-0 sm:w-20 input input-bordered input-sm"
+                        className="w-full mt-2 input input-bordered input-sm sm:mt-0 sm:w-20"
                         disabled={bloqueado}
                       />
                     </div>
@@ -272,8 +276,10 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
           </div>
         </div>
       </form>
-    </>
-  ) : <p className="text-center">Cargando Google Maps...</p>;
+    </div>
+  ) : (
+    <p className="text-center">Cargando Google Maps...</p>
+  );
 };
 
 export default PedidoForm;

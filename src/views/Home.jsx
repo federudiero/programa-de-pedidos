@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import ThemeSwitcher from "../components/ThemeSwitcher";
+
 
 function Home() {
   const navigate = useNavigate();
@@ -31,7 +31,7 @@ function Home() {
       
       {/* 🔘 Switch de tema */}
       <div className="absolute top-4 right-4">
-        <ThemeSwitcher />
+      
       </div>
 
       {/* Logo animado */}

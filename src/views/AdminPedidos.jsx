@@ -16,7 +16,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "../components/EditarPedidoModal";
-import ThemeSwitcher from "../components/ThemeSwitcher";
+
 
 function AdminPedidos() {
   const navigate = useNavigate();
@@ -156,14 +156,14 @@ function AdminPedidos() {
                 <button onClick={() => navigate("/")}>⬅ Volver a Home</button>
               </li>
               <li>
-                <ThemeSwitcher />
+              
               </li>
             </ul>
           </div>
 
           {/* Barra visible en escritorio */}
           <div className="flex-wrap hidden gap-2 md:flex">
-            <ThemeSwitcher />
+           
             <button
               className="btn btn-error btn-outline"
               onClick={cerrarSesion}

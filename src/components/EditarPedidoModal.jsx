@@ -71,8 +71,8 @@ const EditarPedidoModal = ({ show, onClose, pedido, onGuardar }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="w-full max-w-2xl p-6 bg-white shadow-lg rounded-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral bg-opacity-60">
+       <div className="w-full max-w-2xl p-6 shadow-lg bg-base-100 text-base-content rounded-xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold">✏️ Editar Pedido</h2>
           <button onClick={onClose} className="text-white btn btn-sm btn-error">✖</button>

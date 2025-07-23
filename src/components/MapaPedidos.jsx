@@ -61,7 +61,7 @@ const MapaPedidos = ({ pedidos, onAsignarRepartidor }) => {
   }, [isLoaded, pedidos]);
 
   return (
-    <div className="my-4 overflow-hidden border rounded-xl" style={{ height: "500px" }}>
+    <div className="my-4 overflow-hidden border border-base-300 rounded-xl" style={{ height: "500px" }}>
       {isLoaded && (
         <GoogleMap
           mapContainerStyle={{ width: "100%", height: "100%" }}
@@ -82,28 +82,31 @@ const MapaPedidos = ({ pedidos, onAsignarRepartidor }) => {
 
       {/* Modal de asignación */}
       {pedidoSeleccionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-full max-w-sm p-6 bg-white rounded-lg shadow-xl">
-            <h3 className="mb-2 text-lg font-bold text-black">Asignar repartidor a:</h3>
-            <p className="mb-4 text-sm text-gray-600">{pedidoSeleccionado.nombre}<br />{pedidoSeleccionado.direccion}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+          <div className="w-full max-w-sm p-6 shadow-xl bg-base-100 rounded-xl text-base-content">
+            <h3 className="mb-2 text-lg font-bold">Asignar repartidor a:</h3>
+            <p className="mb-4 text-sm opacity-80">
+              {pedidoSeleccionado.nombre}<br />
+              {pedidoSeleccionado.direccion}
+            </p>
 
             <div className="grid grid-cols-2 gap-2 mb-4">
-             {repartidores.map((r) => (
-  <button
-    key={r.email}
-    onClick={() => {
-      onAsignarRepartidor(pedidoSeleccionado.id, r.email, true);
-      setPedidoSeleccionado(null);
-    }}
-    className="text-xs font-semibold btn btn-outline btn-primary btn-xs"
-  >
-    {r.label}
-  </button>
-))}
+              {repartidores.map((r) => (
+                <button
+                  key={r.email}
+                  onClick={() => {
+                    onAsignarRepartidor(pedidoSeleccionado.id, r.email, true);
+                    setPedidoSeleccionado(null);
+                  }}
+                  className="btn btn-outline btn-primary btn-sm"
+                >
+                  {r.label}
+                </button>
+              ))}
             </div>
 
             <button
-              className="w-full btn btn-sm btn-error"
+              className="w-full btn btn-error btn-sm"
               onClick={() => setPedidoSeleccionado(null)}
             >
               Cancelar

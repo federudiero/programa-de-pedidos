@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import PedidoForm from "../components/PedidoForm";
 import { db, auth } from "../firebase/firebase";
 import PedidoTabla from "../components/PedidoTabla";
-import ThemeSwitcher from "../components/ThemeSwitcher";
-
 import {
   collection,
   addDoc,
@@ -133,12 +131,11 @@ function VendedorView() {
         <div className="flex flex-col items-center justify-between gap-4 mb-8 md:flex-row">
           <h2 className="text-2xl font-bold">🎨 Sistema de Pedidos - Pinturería</h2>
           <div className="flex gap-2">
-            <ThemeSwitcher />
             <button className="btn btn-error" onClick={handleLogout}>Cerrar sesión</button>
           </div>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 animate-fade-in-up">
           <label className="mr-2 font-semibold">📅 Ver cantidad de pedidos del día:</label>
           <DatePicker
             selected={fechaSeleccionada}
@@ -151,31 +148,31 @@ function VendedorView() {
           </div>
         </div>
 
-        <div className="p-6 mb-6 border shadow bg-base-100 border-base-300 rounded-xl">
-         <PedidoForm
-  onAgregar={agregarPedido}
-  onActualizar={actualizarPedido}
-  pedidoAEditar={pedidoAEditar}
-  bloqueado={estaCerrado}
-/>
+        <div className="p-6 mb-6 border shadow bg-base-100 border-base-300 rounded-xl animate-fade-in-up">
+          <PedidoForm
+            onAgregar={agregarPedido}
+            onActualizar={actualizarPedido}
+            pedidoAEditar={pedidoAEditar}
+            bloqueado={estaCerrado}
+          />
 
-{!estaCerrado && pedidoAEditar && (
-  <button
-    className="w-full mt-4 btn btn-outline"
-    onClick={() => setPedidoAEditar(null)}
-  >
-    ❌ Cancelar edición
-  </button>
-)}
+          {!estaCerrado && pedidoAEditar && (
+            <button
+              className="w-full mt-4 btn btn-outline"
+              onClick={() => setPedidoAEditar(null)}
+            >
+              ❌ Cancelar edición
+            </button>
+          )}
 
-{estaCerrado && (
-  <div className="p-4 mt-4 text-sm text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
-    🛑 El día ya fue cerrado. No se pueden agregar ni editar pedidos.
-  </div>
-)}
+          {estaCerrado && (
+            <div className="p-4 mt-4 text-sm text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
+              🛑 El día ya fue cerrado. No se pueden agregar ni editar pedidos.
+            </div>
+          )}
         </div>
 
-        <div className="p-6 border shadow bg-base-100 border-base-300 rounded-xl">
+        <div className="p-6 border shadow bg-base-100 border-base-300 rounded-xl animate-fade-in-up">
           <h4 className="mb-4 text-lg font-semibold">📋 Tus pedidos del día</h4>
           <PedidoTabla
             pedidos={pedidos}

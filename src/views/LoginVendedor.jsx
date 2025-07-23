@@ -3,7 +3,6 @@ import { auth, googleProvider } from "../firebase/firebase";
 import { signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import ThemeSwitcher from "../components/ThemeSwitcher";
 
 const vendedoresPermitidos = [
   "federudiero@gmail.com",
@@ -37,23 +36,21 @@ function LoginVendedor() {
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen bg-base-100 text-base-content">
-      {/* Botón de modo claro/oscuro arriba a la derecha */}
-      <div className="absolute top-4 right-4">
-        <ThemeSwitcher />
-      </div>
+    <div className="relative flex items-center justify-center min-h-screen px-4 bg-base-100 text-base-content">
+      <div className="w-full max-w-md p-8 space-y-4 border shadow-xl bg-base-200 border-base-300 rounded-xl">
+        <h2 className="text-2xl font-bold text-center">🛒 Acceso de Vendedor</h2>
 
-      <div className="w-full max-w-md p-8 shadow-lg card bg-base-200">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">🛒 Acceso de Vendedor</h2>
-        </div>
-
-        <button className="w-full mt-4 btn btn-outline text-base-content hover:bg-base-300" onClick={handleGoogleLogin}>
+        <button
+          className="w-full btn btn-outline text-base-content hover:bg-base-300"
+          onClick={handleGoogleLogin}
+        >
           🚀 Iniciar sesión con Google
         </button>
 
-        <button className="w-full btn btn-outline text-base-content hover:bg-base-300" onClick={() => navigate("/")}>
-
+        <button
+          className="w-full btn btn-outline"
+          onClick={() => navigate("/")}
+        >
           ⬅ Volver a Home
         </button>
 

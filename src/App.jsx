@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import VendedorView from "./views/VendedorView";
 import AdminLogin from "./views/AdminLogin";
@@ -14,10 +14,7 @@ import PanelStock from "./components/PanelStock";
 import EstadisticasPanel from "./components/EstadisticasPanel";
 
 function App() {
-  useEffect(() => {
-    // Forzar el uso del tema fijo 'pedidos'
-    document.documentElement.setAttribute("data-theme", "pedidos");
-  }, []);
+ 
 
   return (
     <div className="min-h-screen">

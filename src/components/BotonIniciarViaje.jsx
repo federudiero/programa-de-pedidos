@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+
 
 function generarLinkGoogleMaps(pedidos) {
   const base = "-34.688263,-58.546082"; // Coordenadas de la base
@@ -12,10 +12,7 @@ function generarLinkGoogleMaps(pedidos) {
 }
 
 const BotonIniciarViaje = ({ pedidos }) => {
-  useEffect(() => {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.setAttribute("data-theme", prefersDark ? "night" : "light");
-  }, []);
+  
 
   if (!pedidos || pedidos.length === 0) return null;
 

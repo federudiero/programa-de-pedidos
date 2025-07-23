@@ -17,12 +17,10 @@ const RutaOptimizada = ({ waypoints, onOrdenOptimizado }) => {
   });
 
   const getDireccion = (obj) => {
-  if (!obj?.direccion) return "";
-  
-  // Si tiene un Plus Code al inicio (ej: "48Q38F69+JX - Godoy Cruz 1300...")
-  const direccionLimpia = obj.direccion.replace(/^(\w{4,}\+\w{2,})\s*-\s*/i, "").trim();
-  return direccionLimpia;
-};
+    if (!obj?.direccion) return "";
+    const direccionLimpia = obj.direccion.replace(/^(\w{4,}\+\w{2,})\s*-\s*/i, "").trim();
+    return direccionLimpia;
+  };
 
   useEffect(() => {
     if (isLoaded && waypoints.length > 0) {
@@ -43,17 +41,15 @@ const RutaOptimizada = ({ waypoints, onOrdenOptimizado }) => {
           if (status === "OK" && result) {
             setDirections(result);
 
-            // 🧠 Obtener orden optimizado y notificar
             const orden = result.routes[0].waypoint_order;
             if (onOrdenOptimizado) {
               const ordenado = orden.map((i) => waypoints[i]);
               onOrdenOptimizado(ordenado);
             }
 
-            // 🧭 Extraer coordenadas de cada parada
             const legs = result.routes[0].legs;
             const ubicaciones = legs
-              .slice(0, -1) // quitar el último porque es la vuelta a la base
+              .slice(0, -1)
               .map((leg) => ({
                 position: leg.end_location,
                 direccion: leg.end_address,
@@ -68,25 +64,27 @@ const RutaOptimizada = ({ waypoints, onOrdenOptimizado }) => {
   }, [isLoaded, waypoints]);
 
   return (
-    <div className="my-4 overflow-hidden border rounded-xl" style={{ height: "500px" }}>
-      {isLoaded && (
-        <GoogleMap
-          mapContainerStyle={{ width: "100%", height: "100%" }}
-          center={{ lat: -34.705977, lng: -58.523331 }} // BASE
-          zoom={11}
-        >
-          {directions && <DirectionsRenderer directions={directions} />}
-
-          {paradas.map((parada, index) => (
-            <Marker
-              key={index}
-              position={parada.position}
-              label={`${index + 1}`}
-              title={parada.direccion}
-            />
-          ))}
-        </GoogleMap>
-      )}
+    <div className="my-6 overflow-hidden border shadow-md border-base-300 rounded-xl bg-base-100">
+      <div className="p-4 font-bold text-base-content">🗺️ Ruta optimizada en el mapa</div>
+      <div style={{ height: "500px" }}>
+        {isLoaded && (
+          <GoogleMap
+            mapContainerStyle={{ width: "100%", height: "100%" }}
+            center={{ lat: -34.705977, lng: -58.523331 }}
+            zoom={11}
+          >
+            {directions && <DirectionsRenderer directions={directions} />}
+            {paradas.map((parada, index) => (
+              <Marker
+                key={index}
+                position={parada.position}
+                label={`${index + 1}`}
+                title={parada.direccion}
+              />
+            ))}
+          </GoogleMap>
+        )}
+      </div>
     </div>
   );
 };

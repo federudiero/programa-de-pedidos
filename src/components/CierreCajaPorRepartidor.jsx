@@ -82,7 +82,7 @@ function CierreCajaPorRepartidor() {
   };
 
   return (
-    <div className="p-6">
+    <div className="min-h-screen p-6 bg-base-100 text-base-content">
       <h2 className="mb-4 text-2xl font-bold">📦 Cierre de Caja por Repartidor</h2>
 
       <div className="mb-4">

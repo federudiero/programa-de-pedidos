@@ -58,10 +58,7 @@ function EstadisticasPanel() {
       });
 
       const porDiaArray = Object.entries(porDia)
-        .map(([fecha, cantidad]) => ({
-          fecha,
-          cantidad,
-        }))
+        .map(([fecha, cantidad]) => ({ fecha, cantidad }))
         .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
 
       setCierres(cierresData);
@@ -76,20 +73,17 @@ function EstadisticasPanel() {
 
   const productoTop = Object.entries(acumuladoProductos).sort((a, b) => b[1] - a[1])[0];
   const repartidorTop = Object.entries(rankingRepartidores).sort((a, b) => b[1] - a[1])[0];
-  const chartData = Object.entries(acumuladoProductos).map(([nombre, cantidad]) => ({
-    nombre,
-    cantidad,
-  }));
+  const chartData = Object.entries(acumuladoProductos).map(([nombre, cantidad]) => ({ nombre, cantidad }));
 
   return (
-    <div className="min-h-screen px-4 py-6 mx-auto" style={{ backgroundColor: "#f4f5fa", color: "#1f2937" }}>
+    <div className="min-h-screen px-4 py-6 mx-auto bg-base-100 text-base-content">
       <h2 className="mb-6 text-3xl font-bold">📈 Panel de Estadísticas</h2>
 
       {/* Selector de mes y año */}
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <label className="font-semibold">📅 Seleccionar mes:</label>
         <select
-          className="text-gray-800 select select-bordered"
+          className="select select-bordered"
           value={mesSeleccionado}
           onChange={(e) => setMesSeleccionado(parseInt(e.target.value))}
         >
@@ -101,7 +95,7 @@ function EstadisticasPanel() {
         </select>
 
         <select
-          className="text-gray-800 select select-bordered"
+          className="select select-bordered"
           value={anioSeleccionado}
           onChange={(e) => setAnioSeleccionado(parseInt(e.target.value))}
         >
@@ -118,8 +112,8 @@ function EstadisticasPanel() {
       ) : (
         <>
           <div className="grid gap-6 mb-8 md:grid-cols-2">
-            <div className="p-4 bg-white border rounded-lg shadow-md">
-              <h3 className="mb-2 text-xl font-semibold">🥇 Producto más vendido</h3>
+            <div className="p-4 border rounded-lg shadow-md bg-base-200 border-base-300">
+              <h3 className="mb-2 text-xl font-semibold text-base-content">🥇 Producto más vendido</h3>
               {productoTop ? (
                 <p>
                   <strong>{productoTop[0]}</strong>: {productoTop[1]} unidades
@@ -129,8 +123,8 @@ function EstadisticasPanel() {
               )}
             </div>
 
-            <div className="p-4 bg-white border rounded-lg shadow-md">
-              <h3 className="mb-2 text-xl font-semibold">🏅 Repartidor con más entregas</h3>
+            <div className="p-4 border rounded-lg shadow-md bg-base-200 border-base-300">
+              <h3 className="mb-2 text-xl font-semibold text-base-content">🏅 Repartidor con más entregas</h3>
               {repartidorTop ? (
                 <p>
                   <strong>{repartidorTop[0]}</strong>: {repartidorTop[1]} pedidos
@@ -141,9 +135,9 @@ function EstadisticasPanel() {
             </div>
           </div>
 
-          <div className="p-4 mb-8 bg-white border rounded-lg shadow-md">
+          <div className="p-4 mb-8 border rounded-lg shadow-md bg-base-200 border-base-300">
             <h3 className="mb-4 text-xl font-semibold">📦 Productos más vendidos</h3>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={Math.max(300, chartData.length * 30)}>
               <BarChart
                 data={chartData}
                 layout="vertical"
@@ -153,12 +147,18 @@ function EstadisticasPanel() {
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
                 <XAxis type="number" stroke="#4b5563" />
-                <YAxis dataKey="nombre" type="category" stroke="#4b5563" />
+                <YAxis
+                  dataKey="nombre"
+                  type="category"
+                  stroke="#4b5563"
+                  width={220}
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#f9fafb",
-                    borderColor: "#4ade80",
-                    color: "#1f2937",
+                    backgroundColor: "var(--b1)",
+                    borderColor: "var(--p)",
+                    color: "var(--bc)",
                   }}
                 />
                 <Bar dataKey="cantidad" fill="#22c55e" />
@@ -166,7 +166,7 @@ function EstadisticasPanel() {
             </ResponsiveContainer>
           </div>
 
-          <div className="p-4 bg-white border rounded-lg shadow-md">
+          <div className="p-4 border rounded-lg shadow-md bg-base-200 border-base-300">
             <h3 className="mb-4 text-xl font-semibold">📅 Evolución de ventas por día</h3>
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={ventasPorDia}>
@@ -179,9 +179,9 @@ function EstadisticasPanel() {
                 <YAxis stroke="#4b5563" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#f9fafb",
-                    borderColor: "#3b82f6",
-                    color: "#1f2937",
+                    backgroundColor: "var(--b1)",
+                    borderColor: "var(--p)",
+                    color: "var(--bc)",
                   }}
                 />
                 <Line
@@ -197,7 +197,7 @@ function EstadisticasPanel() {
 
           <details className="mt-6">
             <summary className="text-sm cursor-pointer">📂 Ver JSON de cierres</summary>
-            <pre className="p-2 overflow-x-auto text-xs text-gray-800 bg-gray-100 rounded max-h-64">
+            <pre className="p-2 overflow-x-auto text-xs rounded bg-base-200 text-base-content max-h-64">
               {JSON.stringify(cierres, null, 2)}
             </pre>
           </details>

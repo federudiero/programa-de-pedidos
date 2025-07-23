@@ -21,18 +21,17 @@ const PedidoTabla = ({ pedidos, onEditar, onEliminar, bloqueado }) => {
     <div className="container px-4 py-4 mx-auto">
       {/* ⚠️ Alerta si está bloqueado */}
       {bloqueado && pedidos.length > 0 && (
-  <div className="p-4 mb-4 text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
-    🛑 Este día ya fue cerrado. Podés visualizar los pedidos, pero no editarlos ni eliminarlos.
-  </div>
-)}
-
+        <div className="p-4 mb-4 text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
+          🛑 Este día ya fue cerrado. Podés visualizar los pedidos, pero no editarlos ni eliminarlos.
+        </div>
+      )}
 
       {pedidos.length === 0 ? (
         <p className="mt-4 text-center text-gray-400">No hay pedidos cargados.</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {pedidos.map((p, i) => (
-            <div key={i} className="border-l-4 shadow-md card bg-base-200 border-primary">
+            <div key={i} className="border-l-4 shadow-lg border-primary card bg-base-200">
               <div className="card-body">
                 <div className="flex items-center justify-between mb-2">
                   <h2 className="font-bold text-primary">📦 Pedido #{i + 1}</h2>
@@ -69,7 +68,7 @@ const PedidoTabla = ({ pedidos, onEditar, onEliminar, bloqueado }) => {
                 </ul>
               </div>
 
-              {/* Solo mostrar botones si no está bloqueado */}
+              {/* Botones solo si no está bloqueado */}
               {!bloqueado && (
                 <div className="justify-end px-4 pb-4 card-actions">
                   <button
@@ -79,7 +78,7 @@ const PedidoTabla = ({ pedidos, onEditar, onEliminar, bloqueado }) => {
                     ✏️ Editar
                   </button>
                   <button
-                    className="text-dark btn btn-sm btn-error hover:text-dark"
+                    className="btn btn-sm btn-error"
                     onClick={() => {
                       onEliminar?.(p.id);
                       Swal.fire("🗑️ Eliminado", "El pedido fue eliminado correctamente.", "success");

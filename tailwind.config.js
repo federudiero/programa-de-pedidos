@@ -18,15 +18,8 @@ export default {
     },
   },
   plugins: [daisyui],
-  darkMode: "media", // usa el tema del sistema operativo automáticamente
+  darkMode: false, // no usamos modo automático
   daisyui: {
-    themes: ["light", "night"],
-    darkTheme: "night",
-    base: true,
-    styled: true,
-    utils: true,
-    logs: false,
-    rtl: false,
-    prefix: "",
+    themes: ["nord"], // ⚠️ Usamos solo "nord"
   },
 };
