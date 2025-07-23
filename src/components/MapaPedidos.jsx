@@ -30,35 +30,36 @@ const MapaPedidos = ({ pedidos, onAsignarRepartidor }) => {
     libraries: ["places"],
   });
 
-  useEffect(() => {
-    if (!isLoaded || pedidos.length === 0) return;
+ useEffect(() => {
+  if (!isLoaded || pedidos.length === 0) return;
 
-    const geocoder = new window.google.maps.Geocoder();
-    const geocodificar = async () => {
-      const resultados = await Promise.all(
-        pedidos.map((p) =>
-          new Promise((resolve) => {
-            const direccion = p.direccion.split(" - ").pop();
-            geocoder.geocode({ address: direccion }, (res, status) => {
-              if (status === "OK" && res[0]) {
-                resolve({
-                  id: p.id,
-                  nombre: p.nombre,
-                  direccion: p.direccion,
-                  location: res[0].geometry.location,
-                });
-              } else {
-                resolve(null);
-              }
-            });
-          })
-        )
-      );
-      setCoordenadasPedidos(resultados.filter(Boolean));
-    };
+  const geocoder = new window.google.maps.Geocoder();
+  const geocodificar = async () => {
+    const resultados = await Promise.all(
+      pedidos.map((p) =>
+        new Promise((resolve) => {
+          const direccion = p.direccion; // ✅ usar dirección completa
+          geocoder.geocode({ address: direccion }, (res, status) => {
+            if (status === "OK" && res[0]) {
+              resolve({
+                id: p.id,
+                nombre: p.nombre,
+                direccion: p.direccion,
+                location: res[0].geometry.location,
+              });
+            } else {
+              console.warn("No se pudo geocodificar:", direccion, status);
+              resolve(null);
+            }
+          });
+        })
+      )
+    );
+    setCoordenadasPedidos(resultados.filter(Boolean));
+  };
 
-    geocodificar();
-  }, [isLoaded, pedidos]);
+  geocodificar();
+}, [isLoaded, pedidos]);
 
   return (
     <div className="my-4 overflow-hidden border border-base-300 rounded-xl" style={{ height: "500px" }}>
