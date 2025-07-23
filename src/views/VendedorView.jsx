@@ -86,16 +86,16 @@ function VendedorView() {
   };
 
   const agregarPedido = async (pedido) => {
-    const fechaAhora = new Date();
-    await addDoc(collection(db, "pedidos"), {
-      ...pedido,
-      vendedorEmail: usuario?.email || "sin usuario",
-      fecha: Timestamp.fromDate(fechaAhora),
-      fechaStr: format(fechaAhora, "dd/MM/yyyy HH:mm"),
-    });
-    cargarCantidadPedidos(fechaSeleccionada);
-    cargarPedidos(fechaSeleccionada);
-  };
+  const fechaElegida = fechaSeleccionada; // ← usamos la que seleccionaste
+  await addDoc(collection(db, "pedidos"), {
+    ...pedido,
+    vendedorEmail: usuario?.email || "sin usuario",
+    fecha: Timestamp.fromDate(fechaElegida),
+    fechaStr: format(fechaElegida, "dd/MM/yyyy HH:mm"),
+  });
+  cargarCantidadPedidos(fechaSeleccionada);
+  cargarPedidos(fechaSeleccionada);
+};
 
   const actualizarPedido = async (pedidoActualizado) => {
     const ref = doc(db, "pedidos", pedidoActualizado.id);
