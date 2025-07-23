@@ -13,8 +13,10 @@ import {
   Line,
 } from "recharts";
 import { format, parseISO, getMonth, getYear } from "date-fns";
+import { useNavigate } from "react-router-dom";
 
 function EstadisticasPanel() {
+    const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [cierres, setCierres] = useState([]);
   const [acumuladoProductos, setAcumuladoProductos] = useState({});
@@ -78,6 +80,9 @@ function EstadisticasPanel() {
   return (
     <div className="min-h-screen px-4 py-6 mx-auto bg-base-100 text-base-content">
       <h2 className="mb-6 text-3xl font-bold">📈 Panel de Estadísticas</h2>
+       <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
+              ⬅ Volver a Administrador
+            </button>
 
       {/* Selector de mes y año */}
       <div className="flex flex-wrap items-center gap-4 mb-6">

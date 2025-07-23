@@ -225,31 +225,54 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
               <h2 className="text-xl font-bold">🛒 Productos</h2>
 
               <div className="p-2 overflow-y-auto border rounded-lg bg-base-100 border-base-300 h-72">
-                {productosCatalogo.map((prod, idx) => {
-                  const cantidad = productosSeleccionados.find(p => p.nombre === prod.nombre)?.cantidad || 0;
-                  return (
-                    <div key={idx} className="flex flex-col mb-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="text-sm sm:text-base">
-                        <span className="block font-medium">{prod.nombre}</span>
-                        <span className="block text-gray-500">${prod.precio.toLocaleString()}</span>
-                      </div>
-                      <input
-                        type="number"
-                        min="0"
-                        value={cantidad}
-                        onChange={(e) => {
-                          const cant = parseInt(e.target.value, 10);
-                          setProductosSeleccionados((prev) => {
-                            const sinEste = prev.filter(p => p.nombre !== prod.nombre);
-                            return cant > 0 ? [...sinEste, { ...prod, cantidad: cant }] : sinEste;
-                          });
-                        }}
-                        className="w-full mt-2 input input-bordered input-sm sm:mt-0 sm:w-20"
-                        disabled={bloqueado}
-                      />
-                    </div>
-                  );
-                })}
+              {productosCatalogo.map((prod, idx) => {
+  const seleccionado = productosSeleccionados.find(p => p.nombre === prod.nombre);
+  const cantidad = seleccionado?.cantidad || 0;
+  const estaSeleccionado = !!seleccionado;
+
+  return (
+    <div key={idx} className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        <input
+          type="checkbox"
+          checked={estaSeleccionado}
+          onChange={(e) => {
+            if (e.target.checked) {
+              setProductosSeleccionados((prev) => [...prev, { ...prod, cantidad: 1 }]);
+            } else {
+              setProductosSeleccionados((prev) => prev.filter(p => p.nombre !== prod.nombre));
+            }
+          }}
+          disabled={bloqueado}
+          className="checkbox"
+        />
+        <div className="text-sm sm:text-base">
+          <span className="block font-medium">{prod.nombre}</span>
+          <span className="block text-gray-500">${prod.precio.toLocaleString()}</span>
+        </div>
+      </div>
+
+      {estaSeleccionado && (
+        <input
+          type="number"
+          min="1"
+          value={cantidad}
+          onChange={(e) => {
+            const cant = parseInt(e.target.value, 10);
+            setProductosSeleccionados((prev) => {
+              return prev.map(p =>
+                p.nombre === prod.nombre ? { ...p, cantidad: cant } : p
+              );
+            });
+          }}
+          className="w-full mt-2 input input-bordered input-sm sm:mt-0 sm:w-20"
+          disabled={bloqueado}
+        />
+      )}
+    </div>
+  );
+})}
+
               </div>
 
               <label className="mt-4 label">
@@ -267,7 +290,7 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
 
               <button
                 type="submit"
-                className={`btn mt-6 w-full ${pedidoAEditar ? "btn-warning" : "btn-success"}`}
+                className={`btn mt-6  w-full ${pedidoAEditar ? "btn-warning" : "btn-success"}`}
                 disabled={bloqueado}
               >
                 {pedidoAEditar ? "✏️ Actualizar Pedido" : "✅ Agregar Pedido"}

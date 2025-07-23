@@ -156,7 +156,9 @@ function AdminPedidos() {
                 <button onClick={() => navigate("/")}>⬅ Volver a Home</button>
               </li>
               <li>
-              
+               <button onClick={() => navigate("/admin/estadisticas")} className="btn btn-outline">
+  📈 Ver estadísticas
+</button>
               </li>
             </ul>
           </div>

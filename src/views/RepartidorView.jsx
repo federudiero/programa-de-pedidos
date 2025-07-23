@@ -321,7 +321,7 @@ function RepartidorView() {
         </div>
 
         <div className="mt-6">
-          <h4 className="mb-2 text-xl font-semibold">🗺️ Ruta Optimizada</h4>
+         
           <RutaOptimizada
             origin={BASE_COORDENADAS}
             destination={BASE_COORDENADAS}

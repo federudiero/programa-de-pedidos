@@ -5,7 +5,10 @@ import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import Swal from "sweetalert2";
 
 // Lista de emails permitidos
-const repartidoresPermitidos = Array.from({ length: 8 }, (_, i) => `repartidor${i + 1}@gmail.com`);
+const repartidoresPermitidos = [
+  "federudiero@gmail.com",
+  ...Array.from({ length: 8 }, (_, i) => `repartidor${i + 1}@gmail.com`)
+];
 
 function LoginRepartidor() {
   const [email, setEmail] = useState(repartidoresPermitidos[0]);
