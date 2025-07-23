@@ -226,6 +226,16 @@ function RepartidorView() {
           <label className="font-semibold label-text">⛽ Gasto extra</label>
           <input type="number" className="w-40 input input-bordered" value={gastoExtra} onChange={(e) => actualizarGastoExtra(e.target.value)} disabled={bloqueado} />
         </div>
+<div className="p-4 mt-6 shadow-md bg-base-200 rounded-xl">
+  <h3 className="mb-2 text-xl font-bold">🧾 Resumen de Rendición</h3>
+  <ul className="space-y-1">
+    <li>💵 Total en efectivo: <b>${totales.totalEfectivo.toLocaleString()}</b></li>
+    <li>🏦 Total en transferencia (+10%): <b>${totales.totalTransferencia.toLocaleString()}</b></li>
+    <li>💳 Total en tarjeta (+10%): <b>${totales.totalTarjeta.toLocaleString()}</b></li>
+    <li>⛽ Gasto extra: <b className="text-error">-${gastoExtra.toLocaleString()}</b></li>
+    <li className="mt-2 text-lg font-bold">💰 Total a rendir: <span className="text-success">${totales.totalFinal.toLocaleString()}</span></li>
+  </ul>
+</div>
 
         <RutaOptimizada
           origin={BASE_COORDENADAS}
