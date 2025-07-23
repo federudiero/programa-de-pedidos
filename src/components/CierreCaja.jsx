@@ -1,24 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-  addDoc,
-  query,
-  where,
+  collection, getDocs, updateDoc, doc, addDoc, query, where, deleteDoc,
 } from "firebase/firestore";
-import { db } from "../firebase/firebase";
+import { db, auth } from "../firebase/firebase";
 import { startOfDay, endOfDay, format } from "date-fns";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import { auth } from "../firebase/firebase";
-import { serverTimestamp } from "firebase/firestore";
-
 
 const admins = [
   "federudiero@gmail.com",
@@ -28,120 +18,72 @@ const admins = [
   "agus.belen64@gmail.com"
 ];
 
-
-
 function CierreCaja() {
-  const navigate = useNavigate();
   const [fecha, setFecha] = useState(new Date());
   const [resumen, setResumen] = useState({});
   const [procesado, setProcesado] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [faltanCierres, setFaltanCierres] = useState(false);
-
+  const [cierreYaExistente, setCierreYaExistente] = useState(false);
   const [resumenPorRepartidor, setResumenPorRepartidor] = useState({});
-  const [detallePendientes, setDetallePendientes] = useState([]);
+  const [pedidosEntregados, setPedidosEntregados] = useState([]);
 
-  const getPedidosDeDia = async (dia) => {
-    const inicio = startOfDay(dia);
-    const fin = endOfDay(dia);
-    const q = query(
-      collection(db, "pedidos"),
-      where("fecha", ">=", inicio),
-      where("fecha", "<=", fin),
-      where("entregado", "==", true)
+  const verificarEstado = async () => {
+    setResumen({});
+    setResumenPorRepartidor({});
+    setProcesado(false);
+    setCierreYaExistente(false);
+
+    const fechaStr = format(fecha, "yyyy-MM-dd");
+    const snap = await getDocs(query(collection(db, "cierres"), where("fechaStr", "==", fechaStr)));
+    setCierreYaExistente(!snap.empty);
+
+    const pedidosSnap = await getDocs(
+      query(
+        collection(db, "pedidos"),
+        where("fecha", ">=", startOfDay(fecha)),
+        where("fecha", "<=", endOfDay(fecha)),
+        where("entregado", "==", true)
+      )
     );
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    setPedidosEntregados(pedidosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
-  const getRepartidoresConPedidos = async (dia) => {
-    const pedidos = await getPedidosDeDia(dia);
-    const repartidoresSet = new Set();
-    pedidos.forEach((p) => {
-      if (Array.isArray(p.asignadoA)) {
-        p.asignadoA.forEach((email) => repartidoresSet.add(email));
-      }
-    });
-    return Array.from(repartidoresSet);
-  };
-
-  const verificarCierres = async (repartidores, fechaStr, pedidos) => {
-    const cierresSnap = await getDocs(collection(db, "cierresRepartidor"));
-    const cierresDelDia = cierresSnap.docs.map((doc) => doc.id);
-
-    const pendientes = repartidores.filter(
-      (email) => !cierresDelDia.includes(`${email}_${fechaStr}`)
-    );
-
-    const detalle = pendientes.map((email) => {
-      const cantidad = pedidos.filter(
-        (p) =>
-          Array.isArray(p.asignadoA) &&
-          p.asignadoA.includes(email) &&
-          p.entregado === true
-      ).length;
-      return { email, entregados: cantidad };
-    });
-
-    setDetallePendientes(detalle);
-    return pendientes;
-  };
+  useEffect(() => {
+    verificarEstado();
+  }, [fecha]);
 
   const cerrarCaja = async () => {
     setLoading(true);
-    setFaltanCierres(false);
-   
-    setProcesado(false);
-
     const fechaStr = format(fecha, "yyyy-MM-dd");
 
-    const cierreExistenteSnap = await getDocs(
+    const pedidosSnap = await getDocs(
       query(
-        collection(db, "cierres"),
+        collection(db, "pedidos"),
         where("fecha", ">=", startOfDay(fecha)),
-        where("fecha", "<=", endOfDay(fecha))
+        where("fecha", "<=", endOfDay(fecha)),
+        where("entregado", "==", true)
       )
     );
-
-    if (!cierreExistenteSnap.empty) {
-      const docExistente = cierreExistenteSnap.docs[0];
-      const data = docExistente.data();
-      setResumen(data.productosVendidos || {});
-      setResumenPorRepartidor(data.detalleRepartidores || {});
-      setProcesado(true);
-      alert("⚠️ Ya se realizó el cierre global para esta fecha.");
-      setLoading(false);
-      return;
-    }
-
-    const pedidos = await getPedidosDeDia(fecha);
-    const repartidores = await getRepartidoresConPedidos(fecha);
-    const pendientes = await verificarCierres(repartidores, fechaStr, pedidos);
-
-    if (pendientes.length > 0) {
-      setFaltanCierres(true);
-    
-      setLoading(false);
-      return;
-    }
+    const pedidos = pedidosSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     const resumenGlobal = {};
-    const resumenPorR = {};
+    const porRepartidor = {};
 
-    pedidos.forEach((p) => {
-      if (!Array.isArray(p.asignadoA)) return;
-      const repartidor = p.asignadoA[0];
-      if (!resumenPorR[repartidor]) resumenPorR[repartidor] = [];
-      resumenPorR[repartidor].push(p);
+    for (const p of pedidos) {
+      if (Array.isArray(p.asignadoA)) {
+        const repartidor = p.asignadoA[0];
+        if (!porRepartidor[repartidor]) porRepartidor[repartidor] = [];
+        porRepartidor[repartidor].push(p);
+      }
 
       if (Array.isArray(p.productos)) {
-        p.productos.forEach((prod) => {
+        for (const prod of p.productos) {
           if (!resumenGlobal[prod.nombre]) resumenGlobal[prod.nombre] = 0;
           resumenGlobal[prod.nombre] += prod.cantidad;
-        });
+        }
       } else if (typeof p.pedido === "string") {
         const partes = p.pedido.split(" - ");
-        partes.forEach((parte) => {
+        for (const parte of partes) {
           const match = parte.match(/^(.*?) x(\d+)/);
           if (match) {
             const nombre = match[1].trim();
@@ -149,22 +91,22 @@ function CierreCaja() {
             if (!resumenGlobal[nombre]) resumenGlobal[nombre] = 0;
             resumenGlobal[nombre] += cantidad;
           }
-        });
+        }
       }
-    });
+    }
 
     if (Object.keys(resumenGlobal).length === 0) {
-      alert("⚠️ No se encontraron productos vendidos. No se guardará el cierre.");
+      Swal.fire("Sin ventas", "No se encontraron productos entregados", "warning");
       setLoading(false);
       return;
     }
 
     const productosSnap = await getDocs(collection(db, "productos"));
-    for (const prodDoc of productosSnap.docs) {
-      const data = prodDoc.data();
+    for (const docProd of productosSnap.docs) {
+      const data = docProd.data();
       const vendidos = resumenGlobal[data.nombre] || 0;
       const nuevoStock = data.stock - vendidos;
-      await updateDoc(doc(db, "productos", prodDoc.id), {
+      await updateDoc(doc(db, "productos", docProd.id), {
         stock: nuevoStock >= 0 ? nuevoStock : 0,
       });
     }
@@ -173,209 +115,175 @@ function CierreCaja() {
       fecha,
       fechaStr,
       productosVendidos: resumenGlobal,
-      detalleRepartidores: resumenPorR,
+      detalleRepartidores: porRepartidor,
     });
 
     setResumen(resumenGlobal);
-    setResumenPorRepartidor(resumenPorR);
+    setResumenPorRepartidor(porRepartidor);
     setProcesado(true);
     setLoading(false);
   };
 
-  const exportarExcel = () => {
-    const data = Object.entries(resumen).map(([nombre, cantidad]) => ({
-      Producto: nombre,
-      CantidadDescontada: cantidad,
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "CierreCaja");
-    const fechaStr = format(fecha, "yyyy-MM-dd");
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `CierreCaja_${fechaStr}.xlsx`);
-  };
-
-
 const anularCierre = async () => {
-  const user = auth.currentUser;
-  if (!user || !admins.includes(user.email)) return;
-
-  const fechaStr = format(fecha, "yyyy-MM-dd");
   const confirm = await Swal.fire({
-    title: "¿Anular cierre?",
-    text: `Esto restaurará el stock y eliminará el cierre del día ${fechaStr}.`,
+    title: "¿Anular cierre del día?",
+    text: "Esto restaurará el stock y eliminará el cierre.",
     icon: "warning",
     showCancelButton: true,
-    confirmButtonText: "Sí, anular",
-    cancelButtonText: "Cancelar",
+    confirmButtonText: "Sí, anular"
   });
-
   if (!confirm.isConfirmed) return;
 
   setLoading(true);
+  try {
+    const fechaStr = format(fecha, "yyyy-MM-dd");
+    const snap = await getDocs(query(collection(db, "cierres"), where("fechaStr", "==", fechaStr)));
+    const docCierre = snap.docs[0];
 
-  const cierreSnap = await getDocs(
-    query(
-      collection(db, "cierres"),
-      where("fecha", ">=", startOfDay(fecha)),
-      where("fecha", "<=", endOfDay(fecha))
-    )
-  );
+    if (!docCierre) throw new Error("Cierre no encontrado");
 
-  if (cierreSnap.empty) {
-    Swal.fire("Error", "No se encontró un cierre para esta fecha.", "error");
-    setLoading(false);
-    return;
-  }
+    const data = docCierre.data();
 
-  const cierreDoc = cierreSnap.docs[0];
-  const cierreData = cierreDoc.data();
-  const resumen = cierreData.productosVendidos || {};
+    // Restaurar stock
+    const productosSnap = await getDocs(collection(db, "productos"));
+    for (const prod of productosSnap.docs) {
+      const nombre = prod.data().nombre;
+      const cantidad = data.productosVendidos[nombre] || 0;
+      await updateDoc(prod.ref, {
+        stock: prod.data().stock + cantidad
+      });
+    }
 
-  const productosSnap = await getDocs(collection(db, "productos"));
-  for (const prodDoc of productosSnap.docs) {
-    const data = prodDoc.data();
-    const devueltos = resumen[data.nombre] || 0;
-    await updateDoc(doc(db, "productos", prodDoc.id), {
-      stock: data.stock + devueltos,
+    // Eliminar el cierre
+    await deleteDoc(docCierre.ref);
+
+    // Registrar la anulación
+    await addDoc(collection(db, "anulacionesCierre"), {
+      tipo: "global",
+      fecha,
+      fechaStr,
+      emailAdmin: auth.currentUser.email,
+      productosRevertidos: data.productosVendidos,
+      timestamp: new Date(),
     });
+
+    Swal.fire("Anulado", "Cierre eliminado y stock restaurado", "success");
+
+    // 🔧 Corrección: actualizar el estado del frontend
+    setResumen({});
+    setProcesado(false);
+    setCierreYaExistente(false); // ← IMPORTANTE
+  } catch (e) {
+    console.error(e);
+    Swal.fire("Error", "No se pudo anular", "error");
   }
-
-  // 🔁 Registrar anulación
-  await addDoc(collection(db, "anulacionesCierre"), {
-    tipo: "global",
-    fecha,
-    emailAdmin: user.email,
-    productosRevertidos: resumen,
-    timestamp: serverTimestamp(),
-  });
-
-  await cierreDoc.ref.delete();
-
-  setResumen({});
-  setResumenPorRepartidor({});
-  setProcesado(false);
-  Swal.fire("✅ Anulado", "El cierre ha sido revertido y registrado.", "success");
   setLoading(false);
 };
+
+
+  const exportarExcel = () => {
+    const data = Object.entries(resumen).map(([nombre, cantidad]) => ({
+      Producto: nombre,
+      CantidadDescontada: cantidad
+    }));
+    const hoja = XLSX.utils.json_to_sheet(data);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "CierreCaja");
+    const fechaStr = format(fecha, "yyyy-MM-dd");
+    const buffer = XLSX.write(libro, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(blob, `CierreCaja_${fechaStr}.xlsx`);
+  };
+
   return (
     <div className="max-w-6xl min-h-screen px-4 py-6 mx-auto bg-base-100 text-base-content">
-      <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-2xl font-bold">🧾 Cierre de Caja Diario</h2>
-        <div className="dropdown dropdown-end md:hidden">
-          <button tabIndex={0} className="btn btn-outline">☰ Menú</button>
-          <ul
-            tabIndex={0}
-            className="z-10 p-2 shadow dropdown-content menu bg-base-200 rounded-box w-52"
-          >
-            <li>
-              <button onClick={() => navigate("/admin/stock")}>⬅ Volver a AdminStock</button>
-            </li>
-            <li>
-              <button onClick={() => navigate("/admin/panel-stock")}>📊 Panel de Stock</button>
-            </li>
-          </ul>
-        </div>
-        <div className="hidden gap-2 md:flex">
-          <button className="btn btn-outline" onClick={() => navigate("/admin/stock")}>
-            ⬅ Volver a AdminStock
-          </button>
-          <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>
-            📊 Panel de Stock
-          </button>
-        </div>
-      </div>
+      <h2 className="mb-6 text-2xl font-bold">🧾 Cierre de Caja Diario</h2>
 
       <div className="flex flex-wrap items-center gap-4 mb-6">
         <label className="font-semibold">📅 Fecha:</label>
-        <DatePicker
-          selected={fecha}
-          onChange={(date) => setFecha(date)}
-          className="input input-bordered"
-        />
-        <button className="btn btn-primary" onClick={cerrarCaja} disabled={loading}>
-          {loading ? "Procesando..." : "📦 Procesar Cierre"}
-        </button>
+        <DatePicker selected={fecha} onChange={setFecha} className="input input-bordered" />
+        <button className="btn btn-info" onClick={verificarEstado} disabled={loading}>🔍 Consultar</button>
+        <button className="btn btn-primary" onClick={cerrarCaja} disabled={loading || cierreYaExistente}>📦 Procesar Cierre</button>
       </div>
 
-      {faltanCierres && (
-        <div className="p-4 mb-6 text-red-200 bg-red-700 border border-red-300 rounded shadow">
-          <p className="mb-2 text-lg font-semibold">⚠️ Faltan repartidores por cerrar su caja:</p>
-          <ul className="space-y-1 list-disc list-inside">
-            {detallePendientes.map((r) => (
-              <li key={r.email}>
-                <span className="font-semibold">{r.email}</span> – Pedidos entregados: {r.entregados}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-sm text-yellow-100">👉 Asegurate de que hayan finalizado su reparto.</p>
+      {cierreYaExistente && (
+        <div className="p-2 mb-4 text-yellow-100 bg-yellow-600 border border-yellow-300 rounded">
+          ⚠️ Ya se realizó el cierre para esta fecha.
+        </div>
+      )}
+
+      {cierreYaExistente && auth.currentUser && admins.includes(auth.currentUser.email) && (
+        <div className="mb-4">
+          <button className="btn btn-outline btn-error" onClick={anularCierre}>
+            ❌ Anular cierre del día seleccionado
+          </button>
+        </div>
+      )}
+
+      {!procesado && pedidosEntregados.length > 0 && (
+        <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-info">
+          <h3 className="mb-4 text-lg font-semibold text-info">📦 Pedidos entregados para la fecha</h3>
+          <table className="table w-full table-sm table-zebra">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Nombre</th>
+                <th>Dirección</th>
+                <th>Repartidor</th>
+                <th>Monto</th>
+                <th>Método</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pedidosEntregados.map((p, i) => {
+                let monto = 0;
+                if (typeof p.pedido === "string") {
+                  const match = p.pedido.match(/TOTAL: \$?(\d+)/);
+                  monto = match ? parseInt(match[1]) : 0;
+                  if (p.metodoPago === "transferencia" || p.metodoPago === "tarjeta") {
+                    monto *= 1.1;
+                  }
+                }
+                return (
+                  <tr key={p.id}>
+                    <td>{i + 1}</td>
+                    <td>{p.nombre}</td>
+                    <td>{p.direccion}</td>
+                    <td>{Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-"}</td>
+                    <td>${monto.toLocaleString()}</td>
+                    <td>{p.metodoPago || "-"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
       {procesado && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div>
-            <h3 className="mb-3 text-xl font-semibold">📉 Productos descontados del stock:</h3>
+            <h3 className="text-lg font-semibold">📉 Productos descontados del stock</h3>
             <ul className="list-disc list-inside">
               {Object.entries(resumen).map(([nombre, cantidad]) => (
-                <li key={nombre}>
-                  {nombre}: {cantidad} unidades
-                </li>
+                <li key={nombre}>{nombre}: {cantidad} unidades</li>
               ))}
             </ul>
             <button className="mt-4 btn btn-outline btn-success" onClick={exportarExcel}>
-              📥 Exportar resumen a Excel
+              📥 Exportar a Excel
             </button>
-            
           </div>
-{auth.currentUser && admins.includes(auth.currentUser.email) && (
-  <button
-    className="mt-4 ml-4 btn btn-outline btn-error"
-    onClick={anularCierre}
-    disabled={loading}
-  >
-    ❌ Anular cierre
-  </button>
-)}
+
           <div>
-            <h3 className="mb-3 text-xl font-semibold">📋 Pedidos entregados por repartidor</h3>
-            {Object.entries(resumenPorRepartidor).map(([repartidor, pedidos]) => (
-              <div key={repartidor} className="p-4 mb-8 bg-gray-800 rounded shadow">
-                <h4 className="mb-2 font-bold text-white">🧑 {repartidor}</h4>
-                <div className="overflow-x-auto">
-                  <table className="table w-full text-sm text-white">
-                    <thead>
-                      <tr className="bg-gray-700">
-                        <th>Cliente</th>
-                        <th>Dirección</th>
-                        <th>Teléfono</th>
-                        <th>Método de pago</th>
-                        <th>Total</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pedidos.map((p) => {
-                        const match =
-                          typeof p.pedido === "string"
-                            ? p.pedido.match(/TOTAL: \$?(\d+)/)
-                            : null;
-                        let monto = match ? parseInt(match[1]) : 0;
-                        if (p.metodoPago === "transferencia" || p.metodoPago === "tarjeta")
-                          monto *= 1.1;
-                        return (
-                          <tr key={p.id} className="hover:bg-gray-700">
-                            <td>{p.nombre}</td>
-                            <td>{p.direccion}</td>
-                            <td>{p.telefono}</td>
-                            <td>{p.metodoPago || "-"}</td>
-                            <td>${monto.toLocaleString()}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+            <h3 className="text-lg font-semibold">📋 Pedidos entregados por repartidor</h3>
+            {Object.entries(resumenPorRepartidor).map(([email, pedidos]) => (
+              <div key={email} className="p-4 my-2 bg-gray-800 rounded">
+                <h4 className="mb-2 font-bold text-white">🧑 {email}</h4>
+                <ul className="text-white list-disc list-inside">
+                  {pedidos.map(p => (
+                    <li key={p.id}>{p.nombre} – {p.direccion}</li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>

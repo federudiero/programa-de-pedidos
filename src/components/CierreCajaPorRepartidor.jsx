@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db, auth } from "../firebase/firebase";
+import { db, auth ,format } from "../firebase/firebase";
 import {
   collection,
   getDocs,
@@ -15,7 +15,9 @@ import { startOfDay, endOfDay } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Swal from "sweetalert2";
-import  serverTimestamp from "firebase/firestore";
+import { serverTimestamp } from "firebase/firestore";
+// ✅ CORRECTO
+
 
 const repartidores = [
   { label: "R1", email: "repartidor1@gmail.com" },
@@ -151,6 +153,7 @@ function CierreCajaPorRepartidor() {
   const cierreData = cierreDoc.data();
   const resumen = cierreData.productosVendidos || {};
 
+  // Restaurar stock
   const productosSnap = await getDocs(collection(db, "productos"));
   for (const prodDoc of productosSnap.docs) {
     const data = prodDoc.data();
@@ -172,6 +175,26 @@ function CierreCajaPorRepartidor() {
 
   await deleteDoc(cierreDoc.ref);
 
+  // ❌ Desmarcar cerradoPorRepartidor en pedidos
+  const pedidosSnap = await getDocs(query(
+    collection(db, "pedidos"),
+    where("fecha", ">=", inicio),
+    where("fecha", "<=", fin),
+    where("asignadoA", "array-contains", email)
+  ));
+
+for (const pedido of pedidosSnap.docs) {
+  const data = pedido.data();
+  if (data.cerradoPorRepartidor === true) {
+    await updateDoc(pedido.ref, { cerradoPorRepartidor: false });
+  }
+}
+
+  // Eliminar también el documento de cierre en cierresRepartidor
+const fechaId = format(fecha, "yyyy-MM-dd");
+await deleteDoc(doc(db, "cierresRepartidor", `${email}_${fechaId}`));
+
+
   setResumenCierre((prev) => {
     const actualizado = { ...prev };
     delete actualizado[email];
@@ -181,6 +204,7 @@ function CierreCajaPorRepartidor() {
   setProcesando(false);
   Swal.fire("✅ Anulado", "El cierre fue eliminado, stock restaurado y logueado.", "success");
 };
+
 
   return (
     <div className="min-h-screen p-6 bg-base-100 text-base-content">
