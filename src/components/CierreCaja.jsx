@@ -10,6 +10,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Swal from "sweetalert2";
 
+
+
 const admins = [
   "federudiero@gmail.com",
   "admin2@mail.com",
@@ -27,26 +29,61 @@ function CierreCaja() {
   const [resumenPorRepartidor, setResumenPorRepartidor] = useState({});
   const [pedidosEntregados, setPedidosEntregados] = useState([]);
 
-  const verificarEstado = async () => {
-    setResumen({});
-    setResumenPorRepartidor({});
-    setProcesado(false);
-    setCierreYaExistente(false);
+ const verificarEstado = async () => {
+  setResumen({});
+  setResumenPorRepartidor({});
+  setProcesado(false);
+  setCierreYaExistente(false);
 
-    const fechaStr = format(fecha, "yyyy-MM-dd");
-    const snap = await getDocs(query(collection(db, "cierres"), where("fechaStr", "==", fechaStr)));
-    setCierreYaExistente(!snap.empty);
+  const fechaStr = format(fecha, "yyyy-MM-dd"); // <-- correcto
+  const snap = await getDocs(query(collection(db, "cierres"), where("fechaStr", "==", fechaStr)));
+  setCierreYaExistente(!snap.empty);
 
-    const pedidosSnap = await getDocs(
-      query(
-        collection(db, "pedidos"),
-        where("fecha", ">=", startOfDay(fecha)),
-        where("fecha", "<=", endOfDay(fecha)),
-        where("entregado", "==", true)
-      )
-    );
-    setPedidosEntregados(pedidosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-  };
+  const pedidosSnap = await getDocs(
+    query(
+      collection(db, "pedidos"),
+      where("fecha", ">=", startOfDay(fecha)),
+      where("fecha", "<=", endOfDay(fecha)),
+      where("entregado", "==", true)
+    )
+  );
+  const pedidos = pedidosSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  setPedidosEntregados(pedidos);
+
+  // Generar resumen como si fuera cierre (solo visual)
+  const resumenGlobal = {};
+  const porRepartidor = {};
+
+  for (const p of pedidos) {
+    if (Array.isArray(p.asignadoA)) {
+      const repartidor = p.asignadoA[0];
+      if (!porRepartidor[repartidor]) porRepartidor[repartidor] = [];
+      porRepartidor[repartidor].push(p);
+    }
+
+    if (Array.isArray(p.productos)) {
+      for (const prod of p.productos) {
+        if (!resumenGlobal[prod.nombre]) resumenGlobal[prod.nombre] = 0;
+        resumenGlobal[prod.nombre] += prod.cantidad;
+      }
+    } else if (typeof p.pedido === "string") {
+      const partes = p.pedido.split(" - ");
+      for (const parte of partes) {
+        const match = parte.match(/^(.*?) x(\d+)/);
+        if (match) {
+          const nombre = match[1].trim();
+          const cantidad = parseInt(match[2]);
+          if (!resumenGlobal[nombre]) resumenGlobal[nombre] = 0;
+          resumenGlobal[nombre] += cantidad;
+        }
+      }
+    }
+  }
+
+  setResumen(resumenGlobal);
+  setResumenPorRepartidor(porRepartidor);
+};
+
 
   useEffect(() => {
     verificarEstado();
@@ -112,12 +149,11 @@ function CierreCaja() {
     }
 
     await addDoc(collection(db, "cierres"), {
-      fecha,
-      fechaStr,
-      productosVendidos: resumenGlobal,
-      detalleRepartidores: porRepartidor,
-    });
-
+  fecha,
+  fechaStr, // <-- así
+  productosVendidos: resumenGlobal,
+  detalleRepartidores: porRepartidor,
+});
     setResumen(resumenGlobal);
     setResumenPorRepartidor(porRepartidor);
     setProcesado(true);
@@ -274,19 +310,49 @@ const anularCierre = async () => {
             </button>
           </div>
 
-          <div>
-            <h3 className="text-lg font-semibold">📋 Pedidos entregados por repartidor</h3>
-            {Object.entries(resumenPorRepartidor).map(([email, pedidos]) => (
-              <div key={email} className="p-4 my-2 bg-gray-800 rounded">
-                <h4 className="mb-2 font-bold text-white">🧑 {email}</h4>
-                <ul className="text-white list-disc list-inside">
-                  {pedidos.map(p => (
-                    <li key={p.id}>{p.nombre} – {p.direccion}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-secondary">
+  <h3 className="mb-4 text-lg font-semibold text-secondary">📋 Pedidos entregados por repartidor</h3>
+  {Object.entries(resumenPorRepartidor).map(([email, pedidos]) => (
+    <div key={email} className="mb-6">
+      <h4 className="mb-2 text-base font-bold text-secondary-content">🧑 {email}</h4>
+      <table className="table w-full table-sm table-zebra">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Dirección</th>
+            <th>Pedido</th>
+            <th>Monto</th>
+            <th>Método</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pedidos.map((p, i) => {
+            let monto = 0;
+            if (typeof p.pedido === "string") {
+              const match = p.pedido.match(/TOTAL: \$?(\d+)/);
+              monto = match ? parseInt(match[1]) : 0;
+              if (p.metodoPago === "transferencia" || p.metodoPago === "tarjeta") {
+                monto *= 1.1;
+              }
+            }
+            return (
+              <tr key={p.id}>
+                <td>{i + 1}</td>
+                <td>{p.nombre}</td>
+                <td>{p.direccion}</td>
+                <td>{typeof p.pedido === "string" ? p.pedido.slice(0, 30) + "..." : "-"}</td>
+                <td>${monto.toLocaleString()}</td>
+                <td>{p.metodoPago || "-"}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  ))}
+</div>
+
         </div>
       )}
     </div>

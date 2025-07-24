@@ -3,6 +3,7 @@ import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import Swal from "sweetalert2";
 import { productosCatalogo } from "../components/productosCatalogo";
+import { format } from "date-fns";
 
 const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
   const autoCompleteRef = useRef(null);
@@ -17,6 +18,10 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
 
   const [errorNombre, setErrorNombre] = useState("");
   const [errorTelefono, setErrorTelefono] = useState("");
+
+const ahora = new Date();
+const fechaStr = format(ahora, "yyyy-MM-dd");
+
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
@@ -96,18 +101,20 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
     const pedidoFinal = `${resumen} | TOTAL: $${total}`;
 
     const pedidoConProductos = {
-      nombre,
-      telefono,
-      partido,
-      direccion,
-      entreCalles,
-      pedido: pedidoFinal,
-      coordenadas,
-      productos: productosSeleccionados.map(p => ({
-        nombre: p.nombre,
-        cantidad: p.cantidad
-      })),
-    };
+  nombre,
+  telefono,
+  partido,
+  direccion,
+  entreCalles,
+  pedido: pedidoFinal,
+  coordenadas,
+  productos: productosSeleccionados.map(p => ({
+    nombre: p.nombre,
+    cantidad: p.cantidad
+  })),
+  fecha: ahora,
+  fechaStr // <- este campo es el que permite el cierre y bloqueo correcto
+};
 
     if (pedidoAEditar) {
       onActualizar({ ...pedidoAEditar, ...pedidoConProductos });
