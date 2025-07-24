@@ -113,7 +113,8 @@ const fechaStr = format(ahora, "yyyy-MM-dd");
     cantidad: p.cantidad
   })),
   fecha: ahora,
-  fechaStr // <- este campo es el que permite el cierre y bloqueo correcto
+    fechaStr: fechaStr
+
 };
 
     if (pedidoAEditar) {

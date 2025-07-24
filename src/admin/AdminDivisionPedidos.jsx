@@ -10,6 +10,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 import MapaPedidos from "../components/MapaPedidos";
 import {  format } from "date-fns";
+import AdminNavbar from "../components/AdminNavbar";
 
 const repartidores = [
   { label: "R1", email: "repartidor1@gmail.com" },
@@ -101,12 +102,8 @@ useEffect(() => {
 
   return (
     <div className="max-w-6xl px-4 py-6 mx-auto text-base-content">
-      <button
-        className="mt-6 btn btn-neutral"
-        onClick={() => navigate("/admin/pedidos")}
-      >
-        ⬅ Volver a pedidos
-      </button>
+       <AdminNavbar />
+      <br/>
       <h2 className="mb-4 text-2xl font-bold text-white">División de Pedidos por Repartidor</h2>
 
       <div className="flex flex-col gap-4 mb-5 md:flex-row md:items-center md:justify-between">

@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { db } from "../firebase/firebase";
 import {
   collection, getDocs, query, where,
-  updateDoc, doc, Timestamp, setDoc, getDoc
+  updateDoc, doc, Timestamp, setDoc, getDoc, onSnapshot
 } from "firebase/firestore";
 import { startOfDay, endOfDay, format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -19,21 +19,44 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
 function RepartidorView() {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(startOfDay(new Date()));
   const [gastoExtra, setGastoExtra] = useState(0);
   const [viajeIniciado, setViajeIniciado] = useState(false);
   const [pedidosOrdenados, setPedidosOrdenados] = useState([]);
   const [bloqueado, setBloqueado] = useState(false);
 
-  const email = localStorage.getItem("emailRepartidor");
+  useEffect(() => {
+    const autorizado = localStorage.getItem("repartidorAutenticado");
+    const email = localStorage.getItem("emailRepartidor");
+    if (!autorizado || !email) {
+      navigate("/login-repartidor");
+      return;
+    }
 
-  const verificarCierre = async (fecha) => {
-    const fechaStr = format(fecha, "yyyy-MM-dd");
-    const snap = await getDocs(query(collection(db, "cierres"), where("fechaStr", "==", fechaStr)));
-    setBloqueado(!snap.empty);
-  };
+    const fechaStr = format(fechaSeleccionada, "yyyy-MM-dd");
+    const q = query(collection(db, "cierres"), where("fechaStr", "==", fechaStr));
+
+    const verificarCierre = async () => {
+      const snap = await getDocs(q);
+      const hayCierre = !snap.empty;
+      setBloqueado(hayCierre);
+      console.log("📦 Cierre detectado:", hayCierre, "para fecha", fechaStr);
+    };
+
+    verificarCierre();
+
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const hayCierre = !snap.empty;
+      setBloqueado(hayCierre);
+      console.log("📡 Snapshot cierre detectado:", hayCierre, "para fecha", fechaStr);
+    });
+
+    cargarPedidos(fechaSeleccionada, email);
+
+    return () => unsubscribe();
+  }, [fechaSeleccionada]);
 
   const cargarPedidos = async (fecha, email) => {
     const inicio = Timestamp.fromDate(startOfDay(fecha));
@@ -53,19 +76,6 @@ function RepartidorView() {
     const gastoDoc = await getDoc(doc(db, "gastosReparto", fechaId));
     setGastoExtra(gastoDoc.exists() ? gastoDoc.data().monto || 0 : 0);
   };
-
- useEffect(() => {
-  const autorizado = localStorage.getItem("repartidorAutenticado");
-  if (!autorizado || !email) return navigate("/login-repartidor");
-
-  const init = async () => {
-    await verificarCierre(fechaSeleccionada);
-    await cargarPedidos(fechaSeleccionada, email);
-  };
-
-  init();
-}, [fechaSeleccionada]);
-
 
   const actualizarEstadoPedido = (id, cambios) => {
     setPedidos(prev => prev.map(p => (p.id === id ? { ...p, ...cambios } : p)));
@@ -156,6 +166,9 @@ function RepartidorView() {
     saveAs(new Blob([excelBuffer]), `Entregados_${format(fechaSeleccionada, 'yyyy-MM-dd')}.xlsx`);
   };
 
+  console.log("🧪 Estado de bloqueo:", bloqueado, "Fecha usada:", format(fechaSeleccionada, "yyyy-MM-dd"));
+
+
   return (
     <div className="min-h-screen p-4 bg-base-100 text-base-content">
       <div className="max-w-screen-xl mx-auto">
@@ -164,9 +177,7 @@ function RepartidorView() {
         <DatePicker selected={fechaSeleccionada} onChange={setFechaSeleccionada} className="input input-bordered" />
 
         {viajeIniciado && (
-          <div className="my-4 alert alert-success">
-            🚀 El viaje ha sido iniciado.
-          </div>
+          <div className="my-4 alert alert-success">🚀 El viaje ha sido iniciado.</div>
         )}
 
         {bloqueado && (
@@ -189,20 +200,19 @@ function RepartidorView() {
                 <p><b>📱 Teléfono:</b> {p.telefono}</p>
                 <p><b>📝 Pedido:</b> <span className="font-bold text-success">{p.pedido}</span></p>
 
-               <button
-  className={`btn btn-sm w-full ${
-    bloqueado
-      ? "btn-disabled bg-gray-500 text-white cursor-not-allowed"
-      : p.entregado
-      ? "btn-success"
-      : "btn-error"
-  }`}
-  onClick={() => marcarEntregado(p.id, !p.entregado)}
+                <button
+  className={`btn btn-sm w-full ${p.entregado ? "btn-success" : "btn-error"} ${bloqueado ? "opacity-50 cursor-not-allowed" : ""}`}
+  onClick={() => {
+    if (bloqueado) {
+      Swal.fire("Acción no permitida", "La caja ya fue cerrada para esta fecha. No se puede modificar el estado.", "warning");
+      return;
+    }
+    marcarEntregado(p.id, !p.entregado);
+  }}
   disabled={bloqueado}
 >
   {p.entregado ? "✅ Entregado" : "🚫 No entregado"}
 </button>
-
 
                 <a href={`https://wa.me/${p.telefono}?text=Hola ${p.nombre}, tu pedido ya está en camino 🚚`} target="_blank" rel="noopener noreferrer" className="mt-2 btn btn-sm btn-info">
                   📲 Avisar por WhatsApp

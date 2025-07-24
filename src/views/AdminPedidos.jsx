@@ -17,6 +17,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "../components/EditarPedidoModal";
 import Swal from "sweetalert2";
+import AdminNavbar from "../components/AdminNavbar";
 
 function AdminPedidos() {
   const navigate = useNavigate();
@@ -66,11 +67,7 @@ function AdminPedidos() {
     localStorage.setItem("fechaSeleccionadaAdmin", date);
   };
 
-  const cerrarSesion = () => {
-    localStorage.removeItem("adminAutenticado");
-    localStorage.removeItem("fechaSeleccionadaAdmin");
-    navigate("/");
-  };
+  
 
   const eliminarPedido = async (id) => {
     const confirmacion = await Swal.fire({
@@ -169,36 +166,14 @@ function AdminPedidos() {
 
   return (
     <div className="min-h-screen bg-base-100 text-base-content">
+    <AdminNavbar />
       <div className="max-w-6xl px-4 py-6 mx-auto">
         {/* ENCABEZADO */}
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
           <h2 className="text-2xl font-bold">Administrador</h2>
 
-          {/* Navbar responsive */}
-          <div className="dropdown dropdown-end md:hidden">
-            <button tabIndex={0} className="btn btn-outline">☰ Menú</button>
-            <ul
-              tabIndex={0}
-              className="z-10 p-2 shadow dropdown-content menu bg-base-200 rounded-box w-52"
-            >
-              <li><button onClick={cerrarSesion}>🔓 Cerrar sesión</button></li>
-              <li><button onClick={() => navigate("/admin/dividir-pedidos")}>🗂 División de Pedidos</button></li>
-              <li><button onClick={() => navigate("/admin/stock")}>🧾 Ver Stock</button></li>
-              <li><button onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button></li>
-              <li><button onClick={() => navigate("/admin/estadisticas")}>📈 Ver estadísticas</button></li>
-              <li><button onClick={() => navigate("/")}>⬅ Volver a Home</button></li>
-            </ul>
-          </div>
+         
 
-          {/* Barra escritorio */}
-          <div className="flex-wrap hidden gap-2 md:flex">
-            <button className="btn btn-error btn-outline" onClick={cerrarSesion}>Cerrar sesión</button>
-            <button className="btn btn-info btn-outline" onClick={() => navigate("/admin/dividir-pedidos")}>🗂 División de Pedidos</button>
-            <button className="btn btn-outline btn-success" onClick={() => navigate("/admin/stock")}>🧾 Ver Stock</button>
-            <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
-            <button className="btn btn-outline" onClick={() => navigate("/admin/estadisticas")}>📈 Ver estadísticas</button>
-            <button className="btn btn-outline" onClick={() => navigate("/")}>⬅ Volver a Home</button>
-          </div>
         </div>
 
         {/* Fecha */}

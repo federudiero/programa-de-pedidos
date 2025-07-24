@@ -91,7 +91,7 @@ function VendedorView() {
     ...pedido,
     vendedorEmail: usuario?.email || "sin usuario",
     fecha: Timestamp.fromDate(fechaElegida),
-    fechaStr: format(fechaElegida, "dd/MM/yyyy HH:mm"),
+   fechaStr: format(fechaElegida, "yyyy-MM-dd") ,
   });
   cargarCantidadPedidos(fechaSeleccionada);
   cargarPedidos(fechaSeleccionada);

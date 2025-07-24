@@ -2,11 +2,10 @@ import React, { useEffect, useState } from "react";
 import { collection, getDocs, updateDoc, doc, setDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { nanoid } from "nanoid";
-import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import AdminNavbar from "../components/AdminNavbar";
 
 function AdminStock() {
-  const navigate = useNavigate();
   const [productos, setProductos] = useState([]);
   const [filtro, setFiltro] = useState("");
   const [nuevoProducto, setNuevoProducto] = useState({
@@ -15,7 +14,6 @@ function AdminStock() {
     stock: 0,
     stockMinimo: 10,
   });
-
 
   const cargarProductos = async () => {
     const snapshot = await getDocs(collection(db, "productos"));
@@ -74,44 +72,10 @@ function AdminStock() {
 
   return (
     <div className="min-h-screen p-6 bg-base-100 text-base-content">
+      <AdminNavbar />
       <div className="max-w-4xl mx-auto">
-        {/* Título y Navbar Responsive */}
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
           <h2 className="text-2xl font-bold">📦 Gestión de Stock</h2>
-
-          {/* Menú hamburguesa (móvil) */}
-          <div className="dropdown dropdown-end md:hidden">
-            <button tabIndex={0} className="btn btn-outline">
-              ☰ Menú
-            </button>
-            <ul
-              tabIndex={0}
-              className="z-10 p-2 shadow dropdown-content menu bg-base-200 rounded-box w-52"
-            >
-              <li>
-                <button onClick={() => navigate("/admin/pedidos")}>⬅ Volver a Administrador</button>
-              </li>
-              <li>
-                <button onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
-              </li>
-              <li>
-                <button onClick={() => navigate("/admin/panel-stock")}>📊 Ver Stock</button>
-              </li>
-            </ul>
-          </div>
-
-          {/* Menú horizontal (escritorio) */}
-          <div className="hidden gap-2 md:flex">
-            <button className="btn btn-outline" onClick={() => navigate("/admin/pedidos")}>
-              ⬅ Volver a Administrador
-            </button>
-            <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>
-              📦 Ir a Cierre de Caja
-            </button>
-            <button className="btn btn-outline" onClick={() => navigate("/admin/panel-stock")}>
-              📊 Ver Stock
-            </button>
-          </div>
         </div>
 
         {/* Formulario agregar producto */}
@@ -187,69 +151,86 @@ function AdminStock() {
           onChange={(e) => setFiltro(e.target.value)}
         />
 
-        {/* Lista de productos */}
-        <div className="grid gap-4">
-          {productosFiltrados.map((prod) => (
-            <div key={prod.id} className="p-4 border shadow bg-base-100 text-base-content rounded-xl">
-              <div className="grid gap-2 md:grid-cols-4">
-                <input
-                  className="input input-bordered"
-                  value={prod.nombre}
-                  onChange={(e) =>
-                    setProductos((p) =>
-                      p.map((pr) => (pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))
-                    )
-                  }
-                />
-                <input
-                  className="input input-bordered"
-                  type="number"
-                  value={prod.precio}
-                  onChange={(e) =>
-                    setProductos((p) =>
-                      p.map((pr) =>
-                        pr.id === prod.id ? { ...pr, precio: parseInt(e.target.value) } : pr
+        {/* Lista de productos con nuevo diseño */}
+        <div className="grid gap-6">
+          {productosFiltrados.map((prod) => {
+            const esCombo = prod.nombre.toLowerCase().includes("combo");
+            const colorClase = esCombo
+              ? "border-l-4 border-pink-500 bg-pink-50 dark:bg-pink-900/20"
+              : "border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20";
+
+            return (
+              <div
+                key={prod.id}
+                className={`p-5 shadow-lg rounded-lg ${colorClase} transition-transform hover:scale-[1.01]`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-lg font-semibold">
+                    {esCombo ? "🧃 Combo" : "📦 Producto"} —{" "}
+                    <span className="badge badge-outline">{prod.nombre}</span>
+                  </h4>
+                  <span className="text-sm opacity-60">ID: {prod.id.slice(0, 5)}...</span>
+                </div>
+                <div className="grid gap-3 md:grid-cols-4">
+                  <input
+                    className="w-full input input-bordered"
+                    value={prod.nombre}
+                    onChange={(e) =>
+                      setProductos((p) =>
+                        p.map((pr) => (pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))
                       )
-                    )
-                  }
-                />
-                <input
-                  className="input input-bordered"
-                  type="number"
-                  value={prod.stock}
-                  onChange={(e) =>
-                    setProductos((p) =>
-                      p.map((pr) =>
-                        pr.id === prod.id ? { ...pr, stock: parseInt(e.target.value) } : pr
+                    }
+                  />
+                  <input
+                    className="w-full input input-bordered"
+                    type="number"
+                    value={prod.precio}
+                    onChange={(e) =>
+                      setProductos((p) =>
+                        p.map((pr) =>
+                          pr.id === prod.id ? { ...pr, precio: parseInt(e.target.value) || 0 } : pr
+                        )
                       )
-                    )
-                  }
-                />
-                <input
-                  className="input input-bordered"
-                  type="number"
-                  value={prod.stockMinimo}
-                  onChange={(e) =>
-                    setProductos((p) =>
-                      p.map((pr) =>
-                        pr.id === prod.id
-                          ? { ...pr, stockMinimo: parseInt(e.target.value) }
-                          : pr
+                    }
+                  />
+                  <input
+                    className="w-full input input-bordered"
+                    type="number"
+                    value={prod.stock}
+                    onChange={(e) =>
+                      setProductos((p) =>
+                        p.map((pr) =>
+                          pr.id === prod.id ? { ...pr, stock: parseInt(e.target.value) || 0 } : pr
+                        )
                       )
-                    )
-                  }
-                />
+                    }
+                  />
+                  <input
+                    className="w-full input input-bordered"
+                    type="number"
+                    value={prod.stockMinimo}
+                    onChange={(e) =>
+                      setProductos((p) =>
+                        p.map((pr) =>
+                          pr.id === prod.id
+                            ? { ...pr, stockMinimo: parseInt(e.target.value) || 0 }
+                            : pr
+                        )
+                      )
+                    }
+                  />
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button className="btn btn-warning btn-sm" onClick={() => actualizarProducto(prod)}>
+                    💾 Guardar
+                  </button>
+                  <button className="btn btn-error btn-sm" onClick={() => eliminarProducto(prod.id)}>
+                    🗑️ Eliminar
+                  </button>
+                </div>
               </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <button className="btn btn-warning btn-sm" onClick={() => actualizarProducto(prod)}>
-                  💾 Guardar
-                </button>
-                <button className="btn btn-error btn-sm" onClick={() => eliminarProducto(prod.id)}>
-                  🗑️ Eliminar
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

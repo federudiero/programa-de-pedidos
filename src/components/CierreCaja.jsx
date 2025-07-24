@@ -9,6 +9,10 @@ import { saveAs } from "file-saver";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Swal from "sweetalert2";
+import AdminNavbar from "../components/AdminNavbar";
+
+
+
 
 const admins = [
   "federudiero@gmail.com",
@@ -116,6 +120,7 @@ function CierreCaja() {
 
     const resumenGlobal = {};
     const porRepartidor = {};
+    
 
     for (const p of entregados) {
       const asignado = Array.isArray(p.asignadoA) ? p.asignadoA[0] : "undefined";
@@ -234,6 +239,7 @@ function CierreCaja() {
 
   return (
     <div className="max-w-6xl min-h-screen px-4 py-6 mx-auto bg-base-100 text-base-content">
+    <AdminNavbar />
       <h2 className="mb-6 text-2xl font-bold">🧾 Cierre de Caja Diario</h2>
 
       <div className="flex flex-wrap items-center gap-4 mb-6">
@@ -360,6 +366,8 @@ function CierreCaja() {
           </div>
         </div>
       )}
+
+      
     </div>
   );
 }
