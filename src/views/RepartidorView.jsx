@@ -1,3 +1,4 @@
+// RepartidorView.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { db } from "../firebase/firebase";
 import {
@@ -22,10 +23,9 @@ function RepartidorView() {
   const [pedidos, setPedidos] = useState([]);
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [gastoExtra, setGastoExtra] = useState(0);
-  const [viajeIniciado, setViajeIniciado] = useState(false); 
+  const [viajeIniciado, setViajeIniciado] = useState(false);
   const [pedidosOrdenados, setPedidosOrdenados] = useState([]);
-  
-  const [bloqueado, setBloqueado] = useState(false); // ⛔ nuevo estado
+  const [bloqueado, setBloqueado] = useState(false);
 
   const email = localStorage.getItem("emailRepartidor");
 
@@ -38,7 +38,6 @@ function RepartidorView() {
   const cargarPedidos = async (fecha, email) => {
     const inicio = Timestamp.fromDate(startOfDay(fecha));
     const fin = Timestamp.fromDate(endOfDay(fecha));
-
     const q = query(
       collection(db, "pedidos"),
       where("fecha", ">=", inicio),
@@ -47,7 +46,6 @@ function RepartidorView() {
     );
     const snapshot = await getDocs(q);
     const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
     setPedidos(data);
     setPedidosOrdenados(data.sort((a, b) => (a.ordenRuta || 9999) - (b.ordenRuta || 9999)));
 
@@ -56,13 +54,23 @@ function RepartidorView() {
     setGastoExtra(gastoDoc.exists() ? gastoDoc.data().monto || 0 : 0);
   };
 
-  useEffect(() => {
-    const autorizado = localStorage.getItem("repartidorAutenticado");
-    if (!autorizado || !email) return navigate("/login-repartidor");
+ useEffect(() => {
+  const autorizado = localStorage.getItem("repartidorAutenticado");
+  if (!autorizado || !email) return navigate("/login-repartidor");
 
-    verificarCierre(fechaSeleccionada); // ⛔ verificar si está bloqueado
-    cargarPedidos(fechaSeleccionada, email);
-  }, [fechaSeleccionada]);
+  const init = async () => {
+    await verificarCierre(fechaSeleccionada);
+    await cargarPedidos(fechaSeleccionada, email);
+  };
+
+  init();
+}, [fechaSeleccionada]);
+
+
+  const actualizarEstadoPedido = (id, cambios) => {
+    setPedidos(prev => prev.map(p => (p.id === id ? { ...p, ...cambios } : p)));
+    setPedidosOrdenados(prev => prev.map(p => (p.id === id ? { ...p, ...cambios } : p)));
+  };
 
   const marcarEntregado = async (id, entregado) => {
     if (bloqueado) return;
@@ -96,14 +104,8 @@ function RepartidorView() {
     await setDoc(doc(db, "gastosReparto", fechaId), { monto: num });
   };
 
-  const actualizarEstadoPedido = (id, cambios) => {
-    setPedidos(prev => prev.map(p => (p.id === id ? { ...p, ...cambios } : p)));
-    setPedidosOrdenados(prev => prev.map(p => (p.id === id ? { ...p, ...cambios } : p)));
-  };
-
   const totales = useMemo(() => {
     let totalEfectivo = 0, totalTransferencia = 0, totalTarjeta = 0;
-
     pedidos.forEach(p => {
       if (!p.entregado || typeof p.pedido !== "string") return;
       const match = p.pedido.match(/TOTAL: \$?(\d+)/);
@@ -113,7 +115,6 @@ function RepartidorView() {
       else if (p.metodoPago === "tarjeta") totalTarjeta += monto;
       else totalEfectivo += monto;
     });
-
     return {
       totalEfectivo,
       totalTransferencia,
@@ -140,7 +141,6 @@ function RepartidorView() {
         MontoCalculado: `$${monto.toLocaleString()}`
       };
     });
-
     const resumen = [
       {},
       { Nombre: "Total Efectivo", MontoCalculado: `$${totales.totalEfectivo.toLocaleString()}` },
@@ -149,7 +149,6 @@ function RepartidorView() {
       { Nombre: "Gasto Extra", MontoCalculado: `-$${gastoExtra.toLocaleString()}` },
       { Nombre: "Total Neto", MontoCalculado: `$${totales.totalFinal.toLocaleString()}` }
     ];
-
     const worksheet = XLSX.utils.json_to_sheet([...data, ...resumen]);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Entregados");
@@ -157,19 +156,18 @@ function RepartidorView() {
     saveAs(new Blob([excelBuffer]), `Entregados_${format(fechaSeleccionada, 'yyyy-MM-dd')}.xlsx`);
   };
 
-  
-
   return (
     <div className="min-h-screen p-4 bg-base-100 text-base-content">
       <div className="max-w-screen-xl mx-auto">
         <h2 className="mb-4 text-2xl font-bold">🚚 Pedidos para Reparto</h2>
 
         <DatePicker selected={fechaSeleccionada} onChange={setFechaSeleccionada} className="input input-bordered" />
+
         {viajeIniciado && (
-  <div className="my-4 alert alert-success">
-    🚀 El viaje ha sido iniciado.
-  </div>
-)}
+          <div className="my-4 alert alert-success">
+            🚀 El viaje ha sido iniciado.
+          </div>
+        )}
 
         {bloqueado && (
           <div className="my-4 text-yellow-100 bg-yellow-600 border border-yellow-300 alert">
@@ -191,9 +189,20 @@ function RepartidorView() {
                 <p><b>📱 Teléfono:</b> {p.telefono}</p>
                 <p><b>📝 Pedido:</b> <span className="font-bold text-success">{p.pedido}</span></p>
 
-                <button className={`btn btn-sm w-full ${p.entregado ? "btn-success" : "btn-error"}`} onClick={() => marcarEntregado(p.id, !p.entregado)} disabled={bloqueado}>
-                  {p.entregado ? "✅ Entregado" : "🚫 No entregado"}
-                </button>
+               <button
+  className={`btn btn-sm w-full ${
+    bloqueado
+      ? "btn-disabled bg-gray-500 text-white cursor-not-allowed"
+      : p.entregado
+      ? "btn-success"
+      : "btn-error"
+  }`}
+  onClick={() => marcarEntregado(p.id, !p.entregado)}
+  disabled={bloqueado}
+>
+  {p.entregado ? "✅ Entregado" : "🚫 No entregado"}
+</button>
+
 
                 <a href={`https://wa.me/${p.telefono}?text=Hola ${p.nombre}, tu pedido ya está en camino 🚚`} target="_blank" rel="noopener noreferrer" className="mt-2 btn btn-sm btn-info">
                   📲 Avisar por WhatsApp
@@ -226,16 +235,17 @@ function RepartidorView() {
           <label className="font-semibold label-text">⛽ Gasto extra</label>
           <input type="number" className="w-40 input input-bordered" value={gastoExtra} onChange={(e) => actualizarGastoExtra(e.target.value)} disabled={bloqueado} />
         </div>
-<div className="p-4 mt-6 shadow-md bg-base-200 rounded-xl">
-  <h3 className="mb-2 text-xl font-bold">🧾 Resumen de Rendición</h3>
-  <ul className="space-y-1">
-    <li>💵 Total en efectivo: <b>${totales.totalEfectivo.toLocaleString()}</b></li>
-    <li>🏦 Total en transferencia (+10%): <b>${totales.totalTransferencia.toLocaleString()}</b></li>
-    <li>💳 Total en tarjeta (+10%): <b>${totales.totalTarjeta.toLocaleString()}</b></li>
-    <li>⛽ Gasto extra: <b className="text-error">-${gastoExtra.toLocaleString()}</b></li>
-    <li className="mt-2 text-lg font-bold">💰 Total a rendir: <span className="text-success">${totales.totalFinal.toLocaleString()}</span></li>
-  </ul>
-</div>
+
+        <div className="p-4 mt-6 shadow-md bg-base-200 rounded-xl">
+          <h3 className="mb-2 text-xl font-bold">🧾 Resumen de Rendición</h3>
+          <ul className="space-y-1">
+            <li>💵 Total en efectivo: <b>${totales.totalEfectivo.toLocaleString()}</b></li>
+            <li>🏦 Transferencia (+10%): <b>${totales.totalTransferencia.toLocaleString()}</b></li>
+            <li>💳 Tarjeta (+10%): <b>${totales.totalTarjeta.toLocaleString()}</b></li>
+            <li>⛽ Gasto extra: <b className="text-error">-${gastoExtra.toLocaleString()}</b></li>
+            <li className="mt-2 text-lg font-bold">💰 Total a rendir: <span className="text-success">${totales.totalFinal.toLocaleString()}</span></li>
+          </ul>
+        </div>
 
         <RutaOptimizada
           origin={BASE_COORDENADAS}

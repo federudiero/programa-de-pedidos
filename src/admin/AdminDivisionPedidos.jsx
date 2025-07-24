@@ -9,6 +9,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 import MapaPedidos from "../components/MapaPedidos";
+import {  format } from "date-fns";
 
 const repartidores = [
   { label: "R1", email: "repartidor1@gmail.com" },
@@ -27,6 +28,7 @@ function AdminDivisionPedidos() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [cierreYaProcesado, setCierreYaProcesado] = useState(false);
 
   const cargarPedidosPorFecha = async (fecha) => {
     setLoading(true);
@@ -40,6 +42,21 @@ function AdminDivisionPedidos() {
     setLoading(false);
   };
 
+
+
+
+useEffect(() => {
+  const verificarCierre = async () => {
+    const fechaStr = format(fechaSeleccionada, "yyyy-MM-dd");
+    const snap = await getDocs(
+      query(collection(db, "cierres"), where("fechaStr", "==", fechaStr))
+    );
+    setCierreYaProcesado(!snap.empty);
+  };
+
+  verificarCierre();
+}, [fechaSeleccionada]);
+
   useEffect(() => {
     const adminAuth = localStorage.getItem("adminAutenticado");
     if (!adminAuth) navigate("/admin");
@@ -47,36 +64,36 @@ function AdminDivisionPedidos() {
   }, [fechaSeleccionada, navigate]);
 
   const handleAsignar = async (pedidoId, email, asignar = true) => {
-  try {
-    const pedidoRef = doc(db, "pedidos", pedidoId);
-    let updateObj;
-    if (asignar) {
-      updateObj = { asignadoA: [email] };
-    } else {
-      updateObj = {
-        asignadoA: [],
-        ordenRuta: deleteField(),
-      };
+    try {
+      const pedidoRef = doc(db, "pedidos", pedidoId);
+      let updateObj;
+      if (asignar) {
+        updateObj = { asignadoA: [email] };
+      } else {
+        updateObj = {
+          asignadoA: [],
+          ordenRuta: deleteField(),
+        };
+      }
+
+      await updateDoc(pedidoRef, updateObj);
+
+      setPedidos((prev) =>
+        prev.map((p) =>
+          p.id === pedidoId
+            ? {
+                ...p,
+                asignadoA: asignar ? [email] : [],
+                ordenRuta: asignar ? p.ordenRuta : undefined,
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("❌ Error al asignar/desasignar repartidor:", err);
     }
+  };
 
-    await updateDoc(pedidoRef, updateObj);
-
-    // 🔄 Actualiza solo el pedido modificado en el estado local
-    setPedidos((prev) =>
-  prev.map((p) =>
-    p.id === pedidoId
-      ? {
-          ...p,
-          asignadoA: asignar ? [email] : [],
-          ordenRuta: asignar ? p.ordenRuta : undefined, // mantené si ya había orden
-        }
-      : p
-  )
-);
-  } catch (err) {
-    console.error("❌ Error al asignar/desasignar repartidor:", err);
-  }
-};
   const pedidosFiltrados = pedidos.filter((p) =>
     p.nombre?.toLowerCase().includes(filtro.toLowerCase()) ||
     p.direccion?.toLowerCase().includes(filtro.toLowerCase())
@@ -84,7 +101,13 @@ function AdminDivisionPedidos() {
 
   return (
     <div className="max-w-6xl px-4 py-6 mx-auto text-base-content">
-      <h2 className="mb-4 text-2xl font-bold text-black">División de Pedidos por Repartidor</h2>
+      <button
+        className="mt-6 btn btn-neutral"
+        onClick={() => navigate("/admin/pedidos")}
+      >
+        ⬅ Volver a pedidos
+      </button>
+      <h2 className="mb-4 text-2xl font-bold text-white">División de Pedidos por Repartidor</h2>
 
       <div className="flex flex-col gap-4 mb-5 md:flex-row md:items-center md:justify-between">
         <div>
@@ -111,7 +134,7 @@ function AdminDivisionPedidos() {
       {loading ? (
         <p className="text-lg">Cargando pedidos...</p>
       ) : (
-        <div className="overflow-x-auto shadow-md rounded-xl">
+        <div className="overflow-x-auto border shadow-md rounded-xl border-info">
           <table className="table w-full text-sm border border-base-300">
             <thead className="bg-base-200 text-base-content">
               <tr>
@@ -132,11 +155,12 @@ function AdminDivisionPedidos() {
                   {repartidores.map((r) => (
                     <td key={r.email} className="text-center">
                       <input
-                        type="checkbox"
-                        className={`checkbox checkbox-sm ${p.asignadoA?.includes(r.email) ? "bg-green-500" : ""}`}
-                        checked={p.asignadoA?.includes(r.email) || false}
-                        onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
-                      />
+  type="checkbox"
+  className={`checkbox checkbox-sm ${p.asignadoA?.includes(r.email) ? "bg-green-500" : ""}`}
+  checked={p.asignadoA?.includes(r.email) || false}
+  onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
+  disabled={cierreYaProcesado}
+/>
                     </td>
                   ))}
                 </tr>
@@ -146,17 +170,12 @@ function AdminDivisionPedidos() {
         </div>
       )}
 
-    <MapaPedidos
-  pedidos={pedidos.filter(p => !Array.isArray(p.asignadoA) || p.asignadoA.length === 0)}
-  onAsignarRepartidor={handleAsignar}
-/>
+      <MapaPedidos
+        pedidos={pedidos.filter(p => !Array.isArray(p.asignadoA) || p.asignadoA.length === 0)}
+        onAsignarRepartidor={handleAsignar}
+      />
 
-      <button
-        className="mt-6 btn btn-neutral hover:text-black"
-        onClick={() => navigate("/admin/pedidos")}
-      >
-        ⬅ Volver a pedidos
-      </button>
+    
     </div>
   );
 }

@@ -16,7 +16,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "../components/EditarPedidoModal";
-
+import Swal from "sweetalert2";
 
 function AdminPedidos() {
   const navigate = useNavigate();
@@ -73,13 +73,46 @@ function AdminPedidos() {
   };
 
   const eliminarPedido = async (id) => {
-    if (confirm("¿Seguro que querés eliminar este pedido?")) {
-      try {
-        await deleteDoc(doc(db, "pedidos", id));
-        cargarPedidosPorFecha(fechaSeleccionada);
-      } catch (error) {
-        alert("❌ Error al eliminar: " + error.message);
-      }
+    const confirmacion = await Swal.fire({
+      title: "¿Eliminar pedido?",
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+      customClass: {
+        confirmButton: "btn btn-error",
+        cancelButton: "btn btn-outline"
+      },
+      buttonsStyling: false,
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    try {
+      await deleteDoc(doc(db, "pedidos", id));
+      await cargarPedidosPorFecha(fechaSeleccionada);
+      Swal.fire({
+        icon: "success",
+        title: "Eliminado",
+        text: "El pedido fue eliminado correctamente.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Error al eliminar",
+        text: error.message,
+        confirmButtonText: "Cerrar",
+        customClass: {
+          confirmButton: "btn btn-error"
+        },
+        buttonsStyling: false,
+      });
     }
   };
 
@@ -91,16 +124,13 @@ function AdminPedidos() {
   const guardarCambios = async (pedidoEditado) => {
     try {
       const { id, productos = [], ...resto } = pedidoEditado;
-
       const resumen = productos
         .map((p) => `${p.nombre} x${p.cantidad}`)
         .join(" - ");
-
       const total = productos.reduce(
         (acc, p) => acc + (p.precio || 0) * p.cantidad,
         0
       );
-
       const pedidoStr = `${resumen} | TOTAL: $${total}`;
 
       await updateDoc(doc(db, "pedidos", id), {
@@ -110,9 +140,30 @@ function AdminPedidos() {
       });
 
       setModalVisible(false);
-      cargarPedidosPorFecha(fechaSeleccionada);
+      await cargarPedidosPorFecha(fechaSeleccionada);
+
+      Swal.fire({
+        icon: "success",
+        title: "Guardado",
+        text: "Los cambios fueron guardados correctamente.",
+        confirmButtonText: "OK",
+        customClass: {
+          confirmButton: "btn btn-success"
+        },
+        buttonsStyling: false,
+      });
+
     } catch (error) {
-      alert("❌ Error al guardar cambios: " + error.message);
+      Swal.fire({
+        icon: "error",
+        title: "Error al guardar",
+        text: error.message,
+        confirmButtonText: "Cerrar",
+        customClass: {
+          confirmButton: "btn btn-error"
+        },
+        buttonsStyling: false,
+      });
     }
   };
 
@@ -121,87 +172,38 @@ function AdminPedidos() {
       <div className="max-w-6xl px-4 py-6 mx-auto">
         {/* ENCABEZADO */}
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
-          <h2 className="text-2xl font-bold">
-            📋 Pedidos del Día - Administrador
-          </h2>
+          <h2 className="text-2xl font-bold">Administrador</h2>
 
           {/* Navbar responsive */}
           <div className="dropdown dropdown-end md:hidden">
-            <button tabIndex={0} className="btn btn-outline">
-              ☰ Menú
-            </button>
+            <button tabIndex={0} className="btn btn-outline">☰ Menú</button>
             <ul
               tabIndex={0}
               className="z-10 p-2 shadow dropdown-content menu bg-base-200 rounded-box w-52"
             >
-              <li>
-                <button onClick={cerrarSesion}>🔓 Cerrar sesión</button>
-              </li>
-              <li>
-                <button onClick={() => navigate("/admin/dividir-pedidos")}>
-                  🗂 División de Pedidos
-                </button>
-              </li>
-              <li>
-                <button onClick={() => navigate("/admin/stock")}>
-                  🧾 Ver Stock
-                </button>
-              </li>
-              <li>
-                <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>
-              📦 Ir a Cierre de Caja
-            </button>
-              </li>
-              <li>
-                <button onClick={() => navigate("/")}>⬅ Volver a Home</button>
-              </li>
-              <li>
-               <button onClick={() => navigate("/admin/estadisticas")} className="btn btn-outline">
-  📈 Ver estadísticas
-</button>
-              </li>
+              <li><button onClick={cerrarSesion}>🔓 Cerrar sesión</button></li>
+              <li><button onClick={() => navigate("/admin/dividir-pedidos")}>🗂 División de Pedidos</button></li>
+              <li><button onClick={() => navigate("/admin/stock")}>🧾 Ver Stock</button></li>
+              <li><button onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button></li>
+              <li><button onClick={() => navigate("/admin/estadisticas")}>📈 Ver estadísticas</button></li>
+              <li><button onClick={() => navigate("/")}>⬅ Volver a Home</button></li>
             </ul>
           </div>
 
-          {/* Barra visible en escritorio */}
+          {/* Barra escritorio */}
           <div className="flex-wrap hidden gap-2 md:flex">
-           
-            <button
-              className="btn btn-error btn-outline"
-              onClick={cerrarSesion}
-            >
-              Cerrar sesión
-            </button>
-            <button
-              className="btn btn-info btn-outline"
-              onClick={() => navigate("/admin/dividir-pedidos")}
-            >
-              🗂 División de Pedidos
-            </button>
-            <button
-              className="btn btn-outline btn-success"
-              onClick={() => navigate("/admin/stock")}
-            >
-              🧾 Ver Stock
-            </button>
-            <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>
-              📦 Ir a Cierre de Caja
-            </button>
-            <button onClick={() => navigate("/admin/estadisticas")} className="btn btn-outline">
-  📈 Ver estadísticas
-</button>
-
-            <button className="btn btn-outline" onClick={() => navigate("/")}>
-              ⬅ Volver a Home
-            </button>
+            <button className="btn btn-error btn-outline" onClick={cerrarSesion}>Cerrar sesión</button>
+            <button className="btn btn-info btn-outline" onClick={() => navigate("/admin/dividir-pedidos")}>🗂 División de Pedidos</button>
+            <button className="btn btn-outline btn-success" onClick={() => navigate("/admin/stock")}>🧾 Ver Stock</button>
+            <button className="btn btn-outline" onClick={() => navigate("/admin/cierre-caja")}>📦 Ir a Cierre de Caja</button>
+            <button className="btn btn-outline" onClick={() => navigate("/admin/estadisticas")}>📈 Ver estadísticas</button>
+            <button className="btn btn-outline" onClick={() => navigate("/")}>⬅ Volver a Home</button>
           </div>
         </div>
 
         {/* Fecha */}
-        <div className="mb-6">
-          <label className="block mb-2 font-semibold text-base-content">
-            📅 Seleccionar fecha:
-          </label>
+        <div className="mb-8">
+          <label className="block mb-2 font-semibold text-base-content">📅 Seleccionar fecha:</label>
           <DatePicker
             selected={fechaSeleccionada}
             onChange={handleFechaChange}
@@ -211,98 +213,72 @@ function AdminPedidos() {
 
         {/* Tabla o estado */}
         {loading ? (
-          <div className="mt-10 text-center">
+          <div className="mt-10 text-center animate-pulse">
             <span className="loading loading-spinner loading-lg text-primary"></span>
             <p className="mt-4">Cargando pedidos...</p>
           </div>
         ) : pedidos.length > 0 ? (
           <>
-            <div className="mb-4 overflow-x-auto shadow-xl bg-base-200 rounded-xl">
-              <table className="table w-full text-sm table-zebra text-base-content">
-                <thead className="font-bold bg-base-300 text-base-content">
-                  <tr>
-                    <th>#</th>
-                    <th>NOMBRE</th>
-                    <th>PROVINCIA</th>
-                    <th>CIUDAD</th>
-                    <th>ORDEN</th>
-                    <th>CALLE Y ALTURA</th>
-                    <th>TELEFONO</th>
-                    <th>VENDEDOR</th>
-                    <th>PEDIDO</th>
-                    <th>OBSERVACION</th>
-                    <th>ACCIONES</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pedidos.map((pedido, index) => {
-                    const direccionPartes =
-                      pedido.direccion?.split(",").map((x) => x.trim()) || [];
-                    const ciudad = direccionPartes[0] || "-";
-                    const provincia = direccionPartes[1] || "-";
+           <div className="p-6 mb-6 overflow-x-auto border shadow-xl bg-base-200 border-info rounded-xl animate-fade-in-up">
 
-                    return (
-                      <tr key={pedido.id}>
-                        <td>{index + 1}</td>
-                        <td>{pedido.nombre}</td>
-                        <td>{provincia}</td>
-                        <td>{ciudad}</td>
-                        <td></td>
-                        <td>
-                          <div className="flex items-center gap-2">
-                            <span>{pedido.direccion}</span>
-                            {pedido.direccion && (
-                              <a
-                                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                                  pedido.direccion
-                                )}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-500 hover:underline"
-                                title="Abrir en Google Maps"
-                              >
-                                📍
-                              </a>
-                            )}
-                          </div>
-                        </td>
-                        <td>{pedido.telefono}</td>
-                        <td>{pedido.vendedorEmail || "-"}</td>
-                        <td className="whitespace-pre-wrap">
-                          {pedido.pedido || (
-                            <span className="italic text-base-300">
-                              Sin detalles
-                            </span>
-                          )}
-                        </td>
-                        <td>{pedido.entreCalles || "-"}</td>
-                        <td className="flex flex-col gap-1 md:flex-row">
-                          <button
-                            className="btn btn-xs btn-warning"
-                            onClick={() => editarPedido(pedido)}
-                          >
-                            Editar
-                          </button>
-                          <button
-                            className="btn btn-xs btn-error"
-                            onClick={() => eliminarPedido(pedido.id)}
-                          >
-                            Eliminar
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+              <h3 className="mb-4 text-lg font-semibold text-info">📦 Pedidos para la fecha seleccionada</h3>
+              <table className="table w-full text-base-content table-zebra">
+                <thead className="text-sm uppercase bg-base-300">
+  <tr>
+    <th>#</th>
+    <th>Nombre</th>
+    <th>Calle y altura</th>
+    <th>Teléfono</th>
+    <th>Vendedor</th>
+    <th>Pedido</th>
+    <th>Observación</th>
+    <th>Acciones</th>
+  </tr>
+</thead>
+<tbody>
+  {pedidos.map((pedido, index) => {
+    return (
+      <tr key={pedido.id} className="transition-colors duration-200 hover:bg-base-300">
+        <td>{index + 1}</td>
+        <td>{pedido.nombre}</td>
+        <td>
+          <div className="flex items-center gap-2">
+            <span>{pedido.direccion}</span>
+            {pedido.direccion && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pedido.direccion)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:underline"
+                title="Abrir en Google Maps"
+              >
+                📍
+              </a>
+            )}
+          </div>
+        </td>
+        <td>{pedido.telefono}</td>
+        <td>{pedido.vendedorEmail || "-"}</td>
+        <td className="whitespace-pre-wrap">
+          {pedido.pedido || (
+            <span className="italic text-base-300">Sin detalles</span>
+          )}
+        </td>
+        <td>{pedido.entreCalles || "-"}</td>
+        <td className="flex flex-col gap-1 md:flex-row">
+          <button className="btn btn-xs btn-warning" onClick={() => editarPedido(pedido)}>Editar</button>
+          <button className="btn btn-xs btn-error" onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
               </table>
             </div>
-
             <ExportarExcel pedidos={pedidos} />
           </>
         ) : (
-          <p className="mt-8 text-center text-base-300">
-            📭 No hay pedidos para esta fecha.
-          </p>
+          <p className="mt-8 text-center text-base-300">📭 No hay pedidos para esta fecha.</p>
         )}
       </div>
 
