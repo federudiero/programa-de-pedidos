@@ -58,6 +58,8 @@ function CierreCaja() {
     setPedidosEntregados(entregados);
     setPedidosNoEntregados(noEntregados);
 
+    
+
     const resumenGlobal = {};
     const porRepartidor = {};
 
