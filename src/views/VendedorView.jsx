@@ -27,6 +27,7 @@ function VendedorView() {
   const [pedidos, setPedidos] = useState([]);
   const [pedidoAEditar, setPedidoAEditar] = useState(null);
   const navigate = useNavigate();
+  const pedidosNoEntregados = pedidos.filter(p => !p.entregado);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -177,6 +178,20 @@ function VendedorView() {
             bloqueado={estaCerrado}
           />
         </div>
+        {estaCerrado && pedidosNoEntregados.length > 0 && (
+  <div className="p-6 mt-6 border border-warning bg-warning/20 rounded-xl animate-fade-in-up">
+    <h4 className="mb-2 text-lg font-semibold text-warning">⚠️ Pedidos no entregados</h4>
+    <ul className="list-disc list-inside">
+      {pedidosNoEntregados.map((p) => (
+        <li key={p.id}>
+          <span className="font-semibold">{p.nombre}</span> – {p.direccion}
+          {p.monto && <> – 💰 ${p.monto}</>}
+        </li>
+      ))}
+    </ul>
+    <p className="mt-2 text-sm">⚠️ Estos pedidos quedaron sin entregar el día del cierre.</p>
+  </div>
+)}
       </div>
     </div>
   );
