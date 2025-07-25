@@ -131,7 +131,7 @@ const fechaStr = format(ahora, "yyyy-MM-dd");
   return isLoaded ? (
     <div className="px-4 py-6">
       {bloqueado && (
-        <div className="p-4 mb-4 text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
+        <div className="p-4 mb-4 text-center text-warning-content bg-warning rounded-xl">
           🛑 El día fue cerrado. Solo podés visualizar el formulario.
         </div>
       )}

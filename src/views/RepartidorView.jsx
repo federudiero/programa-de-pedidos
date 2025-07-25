@@ -175,13 +175,15 @@ function RepartidorView() {
         <h2 className="mb-4 text-2xl font-bold">🚚 Pedidos para Reparto</h2>
 
         <DatePicker selected={fechaSeleccionada} onChange={setFechaSeleccionada} className="input input-bordered" />
+        
 
         {viajeIniciado && (
           <div className="my-4 alert alert-success">🚀 El viaje ha sido iniciado.</div>
         )}
 
         {bloqueado && (
-          <div className="my-4 text-yellow-100 bg-yellow-600 border border-yellow-300 alert">
+          
+           <div className="p-4 mb-4 text-center text-warning-content bg-warning rounded-xl">
             🛑 El cierre de caja ya fue realizado. No se pueden modificar los pedidos.
           </div>
         )}

@@ -10,6 +10,7 @@ import {
   doc,
   deleteDoc,
   updateDoc,
+  
 } from "firebase/firestore";
 
 import DatePicker from "react-datepicker";
@@ -18,35 +19,43 @@ import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "../components/EditarPedidoModal";
 import Swal from "sweetalert2";
 import AdminNavbar from "../components/AdminNavbar";
-import { format, parseISO } from "date-fns"; // al inicio del archivo
+import { format, parseISO } from "date-fns";
 
 function AdminPedidos() {
   const navigate = useNavigate();
-
-
-const fechaGuardada = localStorage.getItem("fechaSeleccionadaAdmin");
-let fechaInicial;
-
-try {
-  if (fechaGuardada) {
-    fechaInicial = parseISO(fechaGuardada);
-  } else {
-    const hoyStr = format(new Date(), "yyyy-MM-dd");
-    localStorage.setItem("fechaSeleccionadaAdmin", hoyStr);
-    fechaInicial = parseISO(hoyStr);
-  }
-} catch {
-  const hoyStr = format(new Date(), "yyyy-MM-dd");
-  fechaInicial = parseISO(hoyStr);
-}
-
-
-
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [pedidoAEditar, setPedidoAEditar] = useState(null);
+
+  const fechaGuardada = localStorage.getItem("fechaSeleccionadaAdmin");
+  let fechaInicial;
+
+  try {
+    if (fechaGuardada) {
+      fechaInicial = parseISO(fechaGuardada);
+    } else {
+      const hoyStr = format(new Date(), "yyyy-MM-dd");
+      localStorage.setItem("fechaSeleccionadaAdmin", hoyStr);
+      fechaInicial = parseISO(hoyStr);
+    }
+  } catch {
+    const hoyStr = format(new Date(), "yyyy-MM-dd");
+    fechaInicial = parseISO(hoyStr);
+  }
+
   const [fechaSeleccionada, setFechaSeleccionada] = useState(fechaInicial);
+  const [diaCerrado, setDiaCerrado] = useState(false);
+
+ const verificarCierreDelDia = async (fecha) => {
+  const fechaStr = format(fecha, "yyyy-MM-dd");
+  const cierreDoc = await getDocs(
+    query(collection(db, "cierres"), where("fechaStr", "==", fechaStr))
+  );
+  const cerrado = !cierreDoc.empty;
+  setDiaCerrado(cerrado);
+  if (cerrado) setPedidoAEditar(null);
+};
 
   const cargarPedidosPorFecha = async (fecha) => {
     setLoading(true);
@@ -77,18 +86,17 @@ try {
       navigate("/admin");
     } else {
       cargarPedidosPorFecha(fechaSeleccionada);
+      verificarCierreDelDia(fechaSeleccionada);
     }
   }, [fechaSeleccionada, navigate]);
 
- const handleFechaChange = (date) => {
-  setFechaSeleccionada(date);
-  // Guardar solo la parte de fecha, sin hora ni zona
-  const anio = date.getFullYear();
-const mes = String(date.getMonth() + 1).padStart(2, "0");
-const dia = String(date.getDate()).padStart(2, "0");
-localStorage.setItem("fechaSeleccionadaAdmin", `${anio}-${mes}-${dia}`);
-};
-  
+  const handleFechaChange = (date) => {
+    setFechaSeleccionada(date);
+    const anio = date.getFullYear();
+    const mes = String(date.getMonth() + 1).padStart(2, "0");
+    const dia = String(date.getDate()).padStart(2, "0");
+    localStorage.setItem("fechaSeleccionadaAdmin", `${anio}-${mes}-${dia}`);
+  };
 
   const eliminarPedido = async (id) => {
     const confirmacion = await Swal.fire({
@@ -187,17 +195,12 @@ localStorage.setItem("fechaSeleccionadaAdmin", `${anio}-${mes}-${dia}`);
 
   return (
     <div className="min-h-screen bg-base-100 text-base-content">
-    <AdminNavbar />
+      <AdminNavbar />
       <div className="max-w-6xl px-4 py-6 mx-auto">
-        {/* ENCABEZADO */}
         <div className="flex flex-col gap-4 mb-6 md:flex-row md:items-center md:justify-between">
           <h2 className="text-2xl font-bold">Administrador</h2>
-
-         
-
         </div>
 
-        {/* Fecha */}
         <div className="mb-8">
           <label className="block mb-2 font-semibold text-base-content">📅 Seleccionar fecha:</label>
           <DatePicker
@@ -207,7 +210,12 @@ localStorage.setItem("fechaSeleccionadaAdmin", `${anio}-${mes}-${dia}`);
           />
         </div>
 
-        {/* Tabla o estado */}
+        {diaCerrado && (
+          <div className="p-4 mb-4 text-center text-warning-content bg-warning rounded-xl">
+            ⚠️ El día está cerrado. No se pueden editar ni eliminar pedidos.
+          </div>
+        )}
+
         {loading ? (
           <div className="mt-10 text-center animate-pulse">
             <span className="loading loading-spinner loading-lg text-primary"></span>
@@ -215,60 +223,57 @@ localStorage.setItem("fechaSeleccionadaAdmin", `${anio}-${mes}-${dia}`);
           </div>
         ) : pedidos.length > 0 ? (
           <>
-           <div className="p-6 mb-6 overflow-x-auto border shadow-xl bg-base-200 border-info rounded-xl animate-fade-in-up">
-
+            <div className="p-6 mb-6 overflow-x-auto border shadow-xl bg-base-200 border-info rounded-xl animate-fade-in-up">
               <h3 className="mb-4 text-lg font-semibold text-info">📦 Pedidos para la fecha seleccionada</h3>
               <table className="table w-full text-base-content table-zebra">
                 <thead className="text-sm uppercase bg-base-300">
-  <tr>
-    <th>#</th>
-    <th>Nombre</th>
-    <th>Calle y altura</th>
-    <th>Teléfono</th>
-    <th>Vendedor</th>
-    <th>Pedido</th>
-    <th>Observación</th>
-    <th>Acciones</th>
-  </tr>
-</thead>
-<tbody>
-  {pedidos.map((pedido, index) => {
-    return (
-      <tr key={pedido.id} className="transition-colors duration-200 hover:bg-base-300">
-        <td>{index + 1}</td>
-        <td>{pedido.nombre}</td>
-        <td>
-          <div className="flex items-center gap-2">
-            <span>{pedido.direccion}</span>
-            {pedido.direccion && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pedido.direccion)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-400 hover:underline"
-                title="Abrir en Google Maps"
-              >
-                📍
-              </a>
-            )}
-          </div>
-        </td>
-        <td>{pedido.telefono}</td>
-        <td>{pedido.vendedorEmail || "-"}</td>
-        <td className="whitespace-pre-wrap">
-          {pedido.pedido || (
-            <span className="italic text-base-300">Sin detalles</span>
-          )}
-        </td>
-        <td>{pedido.entreCalles || "-"}</td>
-        <td className="flex flex-col gap-1 md:flex-row">
-          <button className="btn btn-xs btn-warning" onClick={() => editarPedido(pedido)}>Editar</button>
-          <button className="btn btn-xs btn-error" onClick={() => eliminarPedido(pedido.id)}>Eliminar</button>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
+                  <tr>
+                    <th>#</th>
+                    <th>Nombre</th>
+                    <th>Calle y altura</th>
+                    <th>Teléfono</th>
+                    <th>Vendedor</th>
+                    <th>Pedido</th>
+                    <th>Observación</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pedidos.map((pedido, index) => (
+                    <tr key={pedido.id} className="transition-colors duration-200 hover:bg-base-300">
+                      <td>{index + 1}</td>
+                      <td>{pedido.nombre}</td>
+                      <td>
+                        <div className="flex items-center gap-2">
+                          <span>{pedido.direccion}</span>
+                          {pedido.direccion && (
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pedido.direccion)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-400 hover:underline"
+                              title="Abrir en Google Maps"
+                            >
+                              📍
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td>{pedido.telefono}</td>
+                      <td>{pedido.vendedorEmail || "-"}</td>
+                      <td className="whitespace-pre-wrap">
+                        {pedido.pedido || (
+                          <span className="italic text-base-300">Sin detalles</span>
+                        )}
+                      </td>
+                      <td>{pedido.entreCalles || "-"}</td>
+                      <td className="flex flex-col gap-1 md:flex-row">
+                        <button className="btn btn-xs btn-warning" onClick={() => editarPedido(pedido)} disabled={diaCerrado}>Editar</button>
+                        <button className="btn btn-xs btn-error" onClick={() => eliminarPedido(pedido.id)} disabled={diaCerrado}>Eliminar</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
             <ExportarExcel pedidos={pedidos} />

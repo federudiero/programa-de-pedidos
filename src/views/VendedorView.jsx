@@ -165,11 +165,7 @@ function VendedorView() {
             </button>
           )}
 
-          {estaCerrado && (
-            <div className="p-4 mt-4 text-sm text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
-              🛑 El día ya fue cerrado. No se pueden agregar ni editar pedidos.
-            </div>
-          )}
+         
         </div>
 
         <div className="p-6 border shadow bg-base-100 border-base-300 rounded-xl animate-fade-in-up">

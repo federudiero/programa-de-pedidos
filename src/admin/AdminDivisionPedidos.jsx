@@ -1,15 +1,15 @@
+// ... imports existentes
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase/firebase";
 import {
   collection, getDocs, query, where,
   Timestamp, updateDoc, doc, deleteField
 } from "firebase/firestore";
-import { startOfDay, endOfDay } from "date-fns";
+import { startOfDay, endOfDay, format } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
 import MapaPedidos from "../components/MapaPedidos";
-import {  format } from "date-fns";
 import AdminNavbar from "../components/AdminNavbar";
 
 const repartidores = [
@@ -43,20 +43,17 @@ function AdminDivisionPedidos() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    const verificarCierre = async () => {
+      const fechaStr = format(fechaSeleccionada, "yyyy-MM-dd");
+      const snap = await getDocs(
+        query(collection(db, "cierres"), where("fechaStr", "==", fechaStr))
+      );
+      setCierreYaProcesado(!snap.empty);
+    };
 
-
-
-useEffect(() => {
-  const verificarCierre = async () => {
-    const fechaStr = format(fechaSeleccionada, "yyyy-MM-dd");
-    const snap = await getDocs(
-      query(collection(db, "cierres"), where("fechaStr", "==", fechaStr))
-    );
-    setCierreYaProcesado(!snap.empty);
-  };
-
-  verificarCierre();
-}, [fechaSeleccionada]);
+    verificarCierre();
+  }, [fechaSeleccionada]);
 
   useEffect(() => {
     const adminAuth = localStorage.getItem("adminAutenticado");
@@ -102,9 +99,16 @@ useEffect(() => {
 
   return (
     <div className="max-w-6xl px-4 py-6 mx-auto text-base-content">
-       <AdminNavbar />
+      <AdminNavbar />
       <br/>
       <h2 className="mb-4 text-2xl font-bold text-white">División de Pedidos por Repartidor</h2>
+
+      {/* ⚠️ Cartel si el día está cerrado */}
+      {cierreYaProcesado && (
+        <div className="p-4 mb-4 text-center text-warning-content bg-warning rounded-xl">
+          ⚠️ El día está cerrado. No se pueden asignar ni modificar pedidos.
+        </div>
+      )}
 
       <div className="flex flex-col gap-4 mb-5 md:flex-row md:items-center md:justify-between">
         <div>
@@ -152,12 +156,12 @@ useEffect(() => {
                   {repartidores.map((r) => (
                     <td key={r.email} className="text-center">
                       <input
-  type="checkbox"
-  className={`checkbox checkbox-sm ${p.asignadoA?.includes(r.email) ? "bg-green-500" : ""}`}
-  checked={p.asignadoA?.includes(r.email) || false}
-  onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
-  disabled={cierreYaProcesado}
-/>
+                        type="checkbox"
+                        className={`checkbox checkbox-sm ${p.asignadoA?.includes(r.email) ? "bg-green-500" : ""}`}
+                        checked={p.asignadoA?.includes(r.email) || false}
+                        onChange={(e) => handleAsignar(p.id, r.email, e.target.checked)}
+                        disabled={cierreYaProcesado}
+                      />
                     </td>
                   ))}
                 </tr>
@@ -171,8 +175,6 @@ useEffect(() => {
         pedidos={pedidos.filter(p => !Array.isArray(p.asignadoA) || p.asignadoA.length === 0)}
         onAsignarRepartidor={handleAsignar}
       />
-
-    
     </div>
   );
 }

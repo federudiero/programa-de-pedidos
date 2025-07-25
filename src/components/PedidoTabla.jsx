@@ -21,7 +21,7 @@ const PedidoTabla = ({ pedidos, onEditar, onEliminar, bloqueado }) => {
     <div className="container px-4 py-4 mx-auto">
       {/* ⚠️ Alerta si está bloqueado */}
       {bloqueado && pedidos.length > 0 && (
-        <div className="p-4 mb-4 text-yellow-100 bg-yellow-700 border border-yellow-400 rounded">
+        <div className="p-4 mb-4 text-center text-warning-content bg-warning rounded-xl">
           🛑 Este día ya fue cerrado. Podés visualizar los pedidos, pero no editarlos ni eliminarlos.
         </div>
       )}
