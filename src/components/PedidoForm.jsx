@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from "react";
 import { useLoadScript, Autocomplete } from "@react-google-maps/api";
 import { GoogleMap, Marker } from "@react-google-maps/api";
 import Swal from "sweetalert2";
-import { productosCatalogo } from "../components/productosCatalogo";
 import { format } from "date-fns";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
 const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
   const autoCompleteRef = useRef(null);
@@ -15,9 +16,10 @@ const PedidoForm = ({ onAgregar, onActualizar, pedidoAEditar, bloqueado }) => {
   const [partido, setPartido] = useState("");
   const [direccion, setDireccion] = useState("");
   const [entreCalles, setEntreCalles] = useState("");
-
+const [productosFirestore, setProductosFirestore] = useState([]);
   const [errorNombre, setErrorNombre] = useState("");
   const [errorTelefono, setErrorTelefono] = useState("");
+
 
 const ahora = new Date();
 const fechaStr = format(ahora, "yyyy-MM-dd");
@@ -28,8 +30,41 @@ const fechaStr = format(ahora, "yyyy-MM-dd");
     libraries: ["places"]
   });
 
+    useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "productos"));
+        const lista = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+          const regexPrioritarios = /^(envio|envío|combo)/i;
+        // Orden alfabético
+       lista.sort((a, b) => {
+  const esAEnvioOCombo = regexPrioritarios.test(a.nombre);
+  const esBEnvioOCombo = regexPrioritarios.test(b.nombre);
+
+  if (esAEnvioOCombo && !esBEnvioOCombo) return -1;
+  if (!esAEnvioOCombo && esBEnvioOCombo) return 1;
+
+  // Si ambos son iguales en prioridad, orden alfabético
+  return a.nombre.localeCompare(b.nombre);
+});
+
+
+
+setProductosFirestore(lista);
+      } catch (error) {
+        console.error("Error al cargar productos:", error);
+        Swal.fire("❌ Error al cargar productos desde Firestore.");
+      }
+    };
+    cargarProductos();
+  }, []);
+
+  // Si edita pedido, reconstruir productos seleccionados
   useEffect(() => {
-    if (pedidoAEditar) {
+    if (pedidoAEditar && productosFirestore.length > 0) {
       setNombre(pedidoAEditar.nombre || "");
       setTelefono(pedidoAEditar.telefono || "");
       setDireccion(pedidoAEditar.direccion || "");
@@ -37,16 +72,16 @@ const fechaStr = format(ahora, "yyyy-MM-dd");
       setPartido(pedidoAEditar.partido || "");
 
       const nuevosProductos = [];
-      productosCatalogo.forEach((p) => {
+      productosFirestore.forEach((p) => {
         const regex = new RegExp(`${p.nombre} x(\\d+)`);
-        const match = pedidoAEditar.pedido.match(regex);
+        const match = pedidoAEditar.pedido?.match(regex);
         if (match) {
           nuevosProductos.push({ ...p, cantidad: parseInt(match[1]) });
         }
       });
       setProductosSeleccionados(nuevosProductos);
     }
-  }, [pedidoAEditar]);
+  }, [pedidoAEditar, productosFirestore]);
 
   const handlePlaceChanged = () => {
     const place = autoCompleteRef.current.getPlace();
@@ -233,7 +268,7 @@ const fechaStr = format(ahora, "yyyy-MM-dd");
               <h2 className="text-xl font-bold">🛒 Productos</h2>
 
               <div className="p-2 overflow-y-auto border rounded-lg bg-base-100 border-base-300 h-72">
-              {productosCatalogo.map((prod, idx) => {
+              {productosFirestore.map((prod, idx) => {
   const seleccionado = productosSeleccionados.find(p => p.nombre === prod.nombre);
   const cantidad = seleccionado?.cantidad || 0;
   const estaSeleccionado = !!seleccionado;
