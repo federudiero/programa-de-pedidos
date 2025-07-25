@@ -165,22 +165,28 @@ function AdminStock() {
                 className={`p-5 shadow-lg rounded-lg ${colorClase} transition-transform hover:scale-[1.01]`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-lg font-semibold">
-                    {esCombo ? "🧃 Combo" : "📦 Producto"} —{" "}
-                    <span className="badge badge-outline">{prod.nombre}</span>
-                  </h4>
+                 <div className="mb-2">
+  <div className="flex items-center justify-between">
+    <h4 className="text-lg font-bold leading-snug">
+      {esCombo ? "🧃 Combo" : "📦 Producto"}:{" "}
+      <span className="text-primary">{prod.nombre}</span>
+    </h4>
+   
+  </div>
+</div>
                   <span className="text-sm opacity-60">ID: {prod.id.slice(0, 5)}...</span>
                 </div>
                 <div className="grid gap-3 md:grid-cols-4">
-                  <input
-                    className="w-full input input-bordered"
-                    value={prod.nombre}
-                    onChange={(e) =>
-                      setProductos((p) =>
-                        p.map((pr) => (pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))
-                      )
-                    }
-                  />
+                <input
+  className="w-full truncate input input-bordered"
+  style={{ maxWidth: "100%" }}
+  value={prod.nombre}
+  onChange={(e) => {
+    setProductos((p) =>
+      p.map((pr) => (pr.id === prod.id ? { ...pr, nombre: e.target.value } : pr))
+    );
+  }}
+/>
                   <input
                     className="w-full input input-bordered"
                     type="number"

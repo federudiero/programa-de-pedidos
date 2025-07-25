@@ -18,17 +18,35 @@ import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "../components/EditarPedidoModal";
 import Swal from "sweetalert2";
 import AdminNavbar from "../components/AdminNavbar";
+import { format, parseISO } from "date-fns"; // al inicio del archivo
 
 function AdminPedidos() {
   const navigate = useNavigate();
-  const fechaGuardada = localStorage.getItem("fechaSeleccionadaAdmin");
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(
-    fechaGuardada ? new Date(fechaGuardada) : new Date()
-  );
+
+
+const fechaGuardada = localStorage.getItem("fechaSeleccionadaAdmin");
+let fechaInicial;
+
+try {
+  if (fechaGuardada) {
+    fechaInicial = parseISO(fechaGuardada);
+  } else {
+    const hoyStr = format(new Date(), "yyyy-MM-dd");
+    localStorage.setItem("fechaSeleccionadaAdmin", hoyStr);
+    fechaInicial = parseISO(hoyStr);
+  }
+} catch {
+  const hoyStr = format(new Date(), "yyyy-MM-dd");
+  fechaInicial = parseISO(hoyStr);
+}
+
+
+
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [pedidoAEditar, setPedidoAEditar] = useState(null);
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(fechaInicial);
 
   const cargarPedidosPorFecha = async (fecha) => {
     setLoading(true);
@@ -62,11 +80,14 @@ function AdminPedidos() {
     }
   }, [fechaSeleccionada, navigate]);
 
-  const handleFechaChange = (date) => {
-    setFechaSeleccionada(date);
-    localStorage.setItem("fechaSeleccionadaAdmin", date);
-  };
-
+ const handleFechaChange = (date) => {
+  setFechaSeleccionada(date);
+  // Guardar solo la parte de fecha, sin hora ni zona
+  const anio = date.getFullYear();
+const mes = String(date.getMonth() + 1).padStart(2, "0");
+const dia = String(date.getDate()).padStart(2, "0");
+localStorage.setItem("fechaSeleccionadaAdmin", `${anio}-${mes}-${dia}`);
+};
   
 
   const eliminarPedido = async (id) => {

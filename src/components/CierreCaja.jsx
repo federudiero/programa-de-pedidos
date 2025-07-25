@@ -265,59 +265,74 @@ function CierreCaja() {
         </div>
       )}
 
-      {!procesado && pedidosEntregados.length > 0 && (
-        <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-info">
-          <h3 className="mb-4 text-lg font-semibold text-info">📦 Pedidos entregados para la fecha</h3>
-          <table className="table w-full table-sm table-zebra">
-            <thead>
-              <tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Repartidor</th><th>Monto</th><th>Método</th></tr>
-            </thead>
-            <tbody>
-              {pedidosEntregados.map((p, i) => {
-                let monto = 0;
-                if (typeof p.pedido === "string") {
-                  const match = p.pedido.match(/TOTAL: \$?(\d+)/);
-                  monto = match ? parseInt(match[1]) : 0;
-                  if (["transferencia", "tarjeta"].includes(p.metodoPago)) monto *= 1.1;
-                }
-                return (
-                  <tr key={p.id}>
-                    <td>{i + 1}</td>
-                    <td>{p.nombre}</td>
-                    <td>{p.direccion}</td>
-                    <td>{Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-"}</td>
-                    <td>${monto.toLocaleString()}</td>
-                    <td>{p.metodoPago || "-"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+     {pedidosEntregados.length > 0 && (
+  <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-info">
+    <h3 className="mb-4 text-lg font-semibold text-info">📦 Pedidos entregados para la fecha</h3>
+    <table className="table w-full table-sm table-zebra">
+      <thead>
+        <tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Repartidor</th><th>Monto</th><th>Método</th></tr>
+      </thead>
+      <tbody>
+        {pedidosEntregados.map((p, i) => {
+          let monto = 0;
+          if (typeof p.pedido === "string") {
+            const match = p.pedido.match(/TOTAL: \$?(\d+)/);
+            monto = match ? parseInt(match[1]) : 0;
+            if (["transferencia", "tarjeta"].includes(p.metodoPago)) monto *= 1.1;
+          }
+          return (
+            <tr key={p.id}>
+              <td>{i + 1}</td>
+              <td>{p.nombre}</td>
+              <td>{p.direccion}</td>
+              <td>{Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-"}</td>
+              <td>${monto.toLocaleString()}</td>
+              <td>{p.metodoPago || "-"}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
 
-      {!procesado && pedidosNoEntregados.length > 0 && (
-        <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-error">
-          <h3 className="mb-4 text-lg font-semibold text-error">❗ Pedidos NO entregados</h3>
-          <table className="table w-full table-sm table-zebra">
-            <thead>
-              <tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Repartidor</th><th>Pedido</th><th>Método</th></tr>
-            </thead>
-            <tbody>
-              {pedidosNoEntregados.map((p, i) => (
-                <tr key={p.id}>
-                  <td>{i + 1}</td>
-                  <td>{p.nombre}</td>
-                  <td>{p.direccion}</td>
-                  <td>{Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-"}</td>
-                  <td>{typeof p.pedido === "string" ? p.pedido.slice(0, 30) + "..." : "-"}</td>
-                  <td>{p.metodoPago || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+    {/* Monto total del día */}
+    <div className="mt-4 text-lg font-bold text-right text-success">
+      💰 Monto total del día: ${pedidosEntregados.reduce((total, p) => {
+        let monto = 0;
+        if (typeof p.pedido === "string") {
+          const match = p.pedido.match(/TOTAL: \$?(\d+)/);
+          monto = match ? parseInt(match[1]) : 0;
+          if (["transferencia", "tarjeta"].includes(p.metodoPago)) monto *= 1.1;
+        }
+        return total + monto;
+      }, 0).toLocaleString()}
+    </div>
+  </div>
+)}
+
+
+     {!procesado && pedidosNoEntregados.length > 0 && (
+  <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-error">
+    <h3 className="mb-4 text-lg font-semibold text-error">❗ Pedidos NO entregados</h3>
+    <table className="table w-full table-sm table-zebra">
+      <thead>
+        <tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Repartidor</th><th>Pedido</th><th>Método</th></tr>
+      </thead>
+      <tbody>
+        {pedidosNoEntregados.map((p, i) => (
+          <tr key={p.id}>
+            <td>{i + 1}</td>
+            <td>{p.nombre}</td>
+            <td>{p.direccion}</td>
+            <td>{Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-"}</td>
+            <td>{typeof p.pedido === "string" ? p.pedido.slice(0, 30) + "..." : "-"}</td>
+            <td>{p.metodoPago || "-"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
 
       {procesado && (
         <div className="space-y-6">

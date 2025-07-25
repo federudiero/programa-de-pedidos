@@ -24,89 +24,79 @@ function EstadisticasPanel() {
   const [cierres, setCierres] = useState([]);
   const [acumuladoProductos, setAcumuladoProductos] = useState({});
   const [rankingVendedores, setRankingVendedores] = useState({});
-  const [ventasPorDia, setVentasPorDia] = useState([]);
+ 
   const [mesSeleccionado, setMesSeleccionado] = useState(new Date().getMonth());
   const [anioSeleccionado, setAnioSeleccionado] = useState(new Date().getFullYear());
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const snapshot = await getDocs(collection(db, "cierres"));
-      const cierresData = snapshot.docs.map((doc) => doc.data());
+useEffect(() => {
+  const fetchData = async () => {
+    const snapshot = await getDocs(collection(db, "cierres"));
+    const cierresData = snapshot.docs.map((doc) => doc.data());
 
-      const productos = {};
-      const vendedores = {};
-      const porDia = {};
+    const productos = {};
+    const vendedores = {};
 
-      cierresData.forEach((cierre) => {
-        if (!cierre.fechaStr) return;
+    cierresData.forEach((cierre) => {
+      if (!cierre.fechaStr) return;
 
-        let fechaObj;
-        try {
-          fechaObj = parseISO(cierre.fechaStr);
-          if (!isValid(fechaObj)) return;
-        } catch (e) {
-  console.warn("Fecha inválida en cierre:", e);
-  return;
-}
+      let fechaObj;
+      try {
+        fechaObj = parseISO(cierre.fechaStr);
+        if (!isValid(fechaObj)) return;
+      } catch (e) {
+        console.warn("Fecha inválida en cierre:", e);
+        return;
+      }
 
-        const mes = getMonth(fechaObj);
-        const anio = getYear(fechaObj);
-        if (mes !== mesSeleccionado || anio !== anioSeleccionado) return;
+      const mes = getMonth(fechaObj);
+      const anio = getYear(fechaObj);
+      if (mes !== mesSeleccionado || anio !== anioSeleccionado) return;
 
-        const vendidos = cierre.productosVendidos || {};
-        let totalDelDia = 0;
+      const vendidos = cierre.productosVendidos || {};
 
-        Object.entries(vendidos).forEach(([nombre, cantidad]) => {
-          const nombreNormalizado = nombre.toLowerCase();
-          if (
-            nombreNormalizado.includes("envio") ||
-            nombreNormalizado.includes("envío") ||
-            nombreNormalizado.includes("entrega")
-          )
-            return;
+      Object.entries(vendidos).forEach(([nombre, cantidad]) => {
+        const nombreNormalizado = nombre.toLowerCase();
+        if (
+          nombreNormalizado.includes("envio") ||
+          nombreNormalizado.includes("envío") ||
+          nombreNormalizado.includes("entrega")
+        )
+          return;
 
-          productos[nombre] = (productos[nombre] || 0) + cantidad;
-          totalDelDia += cantidad;
-        });
-
-        porDia[cierre.fechaStr] = (porDia[cierre.fechaStr] || 0) + totalDelDia;
-
-        const detalleRepartidores = cierre.detalleRepartidores || {};
-        Object.values(detalleRepartidores).forEach((pedidos) => {
-          pedidos.forEach((pedido) => {
-            const email = pedido.vendedorEmail || "sin-dato";
-            let total = 0;
-
-            if (Array.isArray(pedido.productos)) {
-              total = pedido.productos.reduce((acc, prod) => acc + (prod.cantidad || 0), 0);
-            } else if (typeof pedido.pedido === "string") {
-              const partes = pedido.pedido.split(" - ");
-              for (const parte of partes) {
-                const match = parte.match(/^(.*?) x(\d+)/);
-                if (match) {
-                  total += parseInt(match[2]);
-                }
-              }
-            }
-
-            vendedores[email] = (vendedores[email] || 0) + total;
-          });
-        });
+        productos[nombre] = (productos[nombre] || 0) + cantidad;
       });
 
-      const porDiaArray = Object.entries(porDia)
-        .map(([fecha, cantidad]) => ({ fecha, cantidad }))
-        .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+      const detalleRepartidores = cierre.detalleRepartidores || {};
+      Object.values(detalleRepartidores).forEach((pedidos) => {
+        pedidos.forEach((pedido) => {
+          const email = pedido.vendedorEmail || "sin-dato";
+          let total = 0;
 
-      setCierres(cierresData);
-      setAcumuladoProductos(productos);
-      setRankingVendedores(vendedores);
-      setVentasPorDia(porDiaArray);
-      setLoading(false);
-    };
+          if (Array.isArray(pedido.productos)) {
+            total = pedido.productos.reduce((acc, prod) => acc + (prod.cantidad || 0), 0);
+          } else if (typeof pedido.pedido === "string") {
+            const partes = pedido.pedido.split(" - ");
+            for (const parte of partes) {
+              const match = parte.match(/^(.*?) x(\d+)/);
+              if (match) {
+                total += parseInt(match[2]);
+              }
+            }
+          }
 
-    fetchData();
-  }, [mesSeleccionado, anioSeleccionado]);
+          vendedores[email] = (vendedores[email] || 0) + total;
+        });
+      });
+    });
+
+    setCierres(cierresData);
+    setAcumuladoProductos(productos);
+    setRankingVendedores(vendedores);
+    setLoading(false);
+  };
+
+  fetchData();
+}, [mesSeleccionado, anioSeleccionado]);
 
   const productoTop = Object.entries(acumuladoProductos).sort((a, b) => b[1] - a[1])[0];
   const vendedorTop = Object.entries(rankingVendedores).sort((a, b) => b[1] - a[1])[0];
@@ -183,71 +173,82 @@ function EstadisticasPanel() {
             <h3 className="mb-4 text-xl font-semibold">🥧 Top 5 Productos más vendidos</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  dataKey="cantidad"
-                  data={topProductos}
-                  nameKey="nombre"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                >
-                  {topProductos.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
+  <Pie
+    dataKey="cantidad"
+    data={topProductos}
+    nameKey="nombre"
+    cx="50%"
+    cy="50%"
+    outerRadius={100}
+    labelLine={false}
+    
+  >
+    {topProductos.map((entry, index) => (
+      <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
+    ))}
+  </Pie>
+  <Tooltip />
+  <Legend
+    wrapperStyle={{
+      fontSize: "12px",
+    }}
+  />
+</PieChart>
             </ResponsiveContainer>
           </div>
 
           <div className="p-4 mb-8 border rounded-lg shadow-md bg-base-200 border-base-300">
-            <h3 className="mb-4 text-xl font-semibold">🏆 Top 5 Vendedores</h3>
-            <ResponsiveContainer width="100%" height={topVendedores.length * 40 + 50}>
-              <BarChart
-                data={topVendedores}
-                layout="vertical"
-                margin={{ left: 50 }}
-                barCategoryGap="25%"
-              >
-                <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
-                <XAxis type="number" stroke="#4b5563" />
-                <YAxis
-                  dataKey="nombre"
-                  type="category"
-                  stroke="#4b5563"
-                  width={200}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip />
-                <Bar dataKey="cantidad" fill="#6366f1" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+  <h3 className="mb-4 text-xl font-semibold">🏆 Top 5 Vendedores</h3>
+  {topVendedores.length > 0 ? (
+    <ul className="space-y-2">
+      {topVendedores.map((v, i) => (
+        <li key={i} className="flex items-center justify-between">
+          <span className="font-medium text-base truncate max-w-[70%]">{v.nombre}</span>
+          <span className="text-sm text-base-content/80">{v.cantidad} productos</span>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="text-sm italic text-center">
+      No hay datos suficientes para mostrar el ranking de vendedores.
+    </p>
+  )}
+</div>
 
           <div className="p-4 mb-8 border rounded-lg shadow-md bg-base-200 border-base-300">
-            <h3 className="mb-4 text-xl font-semibold">📅 Evolución de ventas por día</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={ventasPorDia}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#d1d5db" />
-                <XAxis
-                  dataKey="fecha"
-                  tickFormatter={(f) => format(new Date(f), "dd/MM")}
-                  stroke="#4b5563"
-                />
-                <YAxis stroke="#4b5563" />
-                <Tooltip />
-                <Area
-                  type="monotone"
-                  dataKey="cantidad"
-                  stroke="#3b82f6"
-                  fill="#3b82f666"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+  <h3 className="mb-4 text-xl font-semibold">🗓️ Resumen del mes</h3>
+  <ul className="space-y-2 text-base">
+    <li>
+      📦 <strong>{Object.values(acumuladoProductos).reduce((a, b) => a + b, 0)}</strong> productos vendidos
+    </li>
+    <li>
+      📋 <strong>
+        {cierres.filter(c => {
+          const fechaObj = parseISO(c.fechaStr);
+          return isValid(fechaObj) &&
+            getMonth(fechaObj) === mesSeleccionado &&
+            getYear(fechaObj) === anioSeleccionado;
+        }).reduce((total, cierre) => {
+          const detalle = cierre.detalleRepartidores || {};
+          return total + Object.values(detalle).reduce((acc, pedidos) => acc + pedidos.length, 0);
+        }, 0)}
+      </strong> pedidos entregados
+    </li>
+    <li>
+      📅 <strong>
+        {
+          cierres.filter(c => {
+            const fechaObj = parseISO(c.fechaStr);
+            return isValid(fechaObj) &&
+              getMonth(fechaObj) === mesSeleccionado &&
+              getYear(fechaObj) === anioSeleccionado;
+          }).length
+        }
+      </strong> días con cierre procesado
+    </li>
+  </ul>
+</div>
+
 
           <div className="p-4 mb-8 border rounded-lg shadow-md bg-base-200 border-base-300">
             <h3 className="mb-4 text-xl font-semibold">📋 Pedidos entregados del mes seleccionado</h3>

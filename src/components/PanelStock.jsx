@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase/firebase";
-
 import AdminNavbar from "../components/AdminNavbar";
+import { BadgeCheck, AlertTriangle } from "lucide-react";
 
 function PanelStock() {
-
   const [productos, setProductos] = useState([]);
   const [filtro, setFiltro] = useState("");
 
@@ -24,58 +23,62 @@ function PanelStock() {
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
 
   return (
-    <div className="p-6 text-base-content">
-    <AdminNavbar/>
-      
-      <h2 className="mb-4 text-3xl font-bold text-primary">📦 Panel de Stock</h2>
+    <div className="min-h-screen px-4 py-6 bg-base-100 text-base-content">
+      <AdminNavbar />
+      <h2 className="mb-6 text-3xl font-bold text-primary">📦 Panel de Stock</h2>
 
       <input
         type="text"
         placeholder="🔍 Buscar producto..."
-        className="w-full max-w-md mb-6 input input-bordered"
+        className="w-full max-w-md mb-8 input input-bordered"
         value={filtro}
         onChange={(e) => setFiltro(e.target.value)}
       />
 
-      <div className="overflow-x-auto border shadow-xl rounded-xl border-base-300">
-        <table className="table w-full">
-          <thead className="bg-base-200 text-base-content">
-            <tr>
-              <th className="px-4 py-3 text-left">Producto</th>
-              <th className="px-4 py-3 text-center">Stock</th>
-              <th className="px-4 py-3 text-center">Mínimo</th>
-              <th className="px-4 py-3 text-center">Estado</th>
-            </tr>
-          </thead>
-          <tbody className="bg-base-100">
-            {productosFiltrados.map((p) => {
-              const bajo = p.stock <= p.stockMinimo;
-              return (
-                <tr
-                  key={p.id}
-                  className="transition-colors border-t hover:bg-base-200 border-base-300"
-                >
-                  <td className="px-4 py-3">{p.nombre}</td>
-                  <td className="text-center">{p.stock}</td>
-                  <td className="text-center">{p.stockMinimo}</td>
-                  <td className="text-center">
-                    <span className={`badge ${bajo ? "badge-error" : "badge-success"}`}>
-                      {bajo ? "Bajo" : "OK"}
+      {productosFiltrados.length === 0 ? (
+        <div className="p-6 text-center text-gray-400 bg-base-200 rounded-xl">
+          No se encontraron productos.
+        </div>
+      ) : (
+        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {productosFiltrados.map((p) => {
+            const bajo = p.stock <= p.stockMinimo;
+            return (
+              <div
+                key={p.id}
+                className={`card shadow-md bg-base-200 border border-base-300 transition-all animate-fade-in-up`}
+              >
+                <div className="card-body">
+                  <h3 className="text-lg font-semibold">{p.nombre}</h3>
+
+                  <div className="mt-2 space-y-1 text-sm">
+                    <p>📦 Stock actual: <span className="font-bold">{p.stock}</span></p>
+                    <p>🔻 Mínimo requerido: <span className="font-bold">{p.stockMinimo}</span></p>
+                  </div>
+
+                  <div className="mt-4">
+                    <span className={`badge px-3 py-2 text-sm ${bajo ? "badge-error" : "badge-success"} flex items-center gap-2`}>
+                      {bajo ? (
+                        <>
+                        <span className="flex items-center gap-2 px-3 py-2 badge badge-error">
+  <AlertTriangle className="w-4 h-4" /> Bajo
+</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex items-center gap-2 px-3 py-2 badge badge-success">
+  <BadgeCheck className="w-4 h-4" /> OK
+</span>
+                        </>
+                      )}
                     </span>
-                  </td>
-                </tr>
-              );
-            })}
-            {productosFiltrados.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-gray-400">
-                  No se encontraron productos.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
