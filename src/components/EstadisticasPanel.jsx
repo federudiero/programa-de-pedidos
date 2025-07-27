@@ -306,12 +306,9 @@ useEffect(() => {
             </div>
           </div>
 
-          <details className="mt-6">
-            <summary className="text-sm cursor-pointer">📂 Ver JSON de cierres</summary>
-            <pre className="p-2 overflow-x-auto text-xs rounded bg-base-200 text-base-content max-h-64">
-              {JSON.stringify(cierres, null, 2)}
-            </pre>
-          </details>
+
+       
+
         </>
       )}
     </div>

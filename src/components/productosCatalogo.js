@@ -9,6 +9,7 @@ export const productosCatalogo = [
   { nombre: "Combo latex Premium + rodillo + enduido 20L ", precio: 39500 },
   { nombre: "Combo latex Lavable + rodillo + enduido 20L ", precio: 43500 },
   { nombre: "Combo latex Superior + rodillo + enduido 20L ", precio: 47000 },
+  { nombre: "Combo membrana liquida + rodillo + venda 20L ", precio: 37500 },
 
   { nombre: "Enduido x Xl ", precio: 3000 },
   { nombre: "Enduido x 4lts ", precio: 10000 },

@@ -165,11 +165,12 @@ function CierreCaja() {
     }
 
     await addDoc(collection(db, "cierres"), {
-      fecha,
-      fechaStr,
-      productosVendidos: resumenGlobal,
-      detalleRepartidores: porRepartidor,
-    });
+  fecha,
+  fechaStr,
+  productosVendidos: resumenGlobal,
+  detalleRepartidores: porRepartidor,
+  noEntregados: todos.filter(p => !p.entregado),
+});
 
     setResumen(resumenGlobal);
     setResumenPorRepartidor(porRepartidor);
@@ -224,20 +225,89 @@ function CierreCaja() {
     }
     setLoading(false);
   };
+const exportarExcelCompleto = () => {
+  const libro = XLSX.utils.book_new();
+  const fechaStr = format(fecha, "yyyy-MM-dd");
 
-  const exportarExcel = () => {
-    const data = Object.entries(resumen).map(([nombre, cantidad]) => ({
+  const dataUnificada = [];
+
+  // 📦 Pedidos entregados
+  pedidosEntregados.forEach((p, i) => {
+    let monto = 0;
+    if (typeof p.pedido === "string") {
+      const match = p.pedido.match(/TOTAL: \$?(\d+)/);
+      monto = match ? parseInt(match[1]) : 0;
+      if (["transferencia", "tarjeta"].includes(p.metodoPago)) monto *= 1.1;
+    }
+
+    dataUnificada.push({
+      "#": i + 1,
+      Estado: "✅ ENTREGADO",
+      Cliente: p.nombre,
+      Dirección: p.direccion,
+      Repartidor: Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-",
+      Pedido: typeof p.pedido === "string" ? p.pedido : "-",
+      Monto: monto,
+      Método: p.metodoPago || "-",
+    });
+  });
+
+  // ❌ Pedidos NO entregados
+  pedidosNoEntregados.forEach((p, i) => {
+    dataUnificada.push({
+      "#": pedidosEntregados.length + i + 1,
+      Estado: "❌ NO ENTREGADO",
+      Cliente: p.nombre,
+      Dirección: p.direccion,
+      Repartidor: Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-",
+      Pedido: typeof p.pedido === "string" ? p.pedido : "-",
+      Monto: "-",
+      Método: p.metodoPago || "-",
+    });
+  });
+
+  // 💰 Totales por repartidor
+  dataUnificada.push({});
+  dataUnificada.push({ Estado: "🔹 TOTAL POR REPARTIDOR" });
+
+  Object.entries(resumenPorRepartidor).forEach(([email, pedidos]) => {
+    const total = pedidos.reduce((acc, p) => {
+      let monto = 0;
+      if (typeof p.pedido === "string") {
+        const match = p.pedido.match(/TOTAL: \$?(\d+)/);
+        monto = match ? parseInt(match[1]) : 0;
+        if (["transferencia", "tarjeta"].includes(p.metodoPago)) monto *= 1.1;
+      }
+      return acc + monto;
+    }, 0);
+
+    dataUnificada.push({
+      Repartidor: email,
+      Pedido: "💰 TOTAL",
+      Monto: total,
+    });
+  });
+
+  // 📉 Productos descontados del stock
+  dataUnificada.push({});
+  dataUnificada.push({ Estado: "📉 PRODUCTOS DESCONTADOS DEL STOCK" });
+
+  Object.entries(resumen).forEach(([nombre, cantidad]) => {
+    dataUnificada.push({
       Producto: nombre,
-      CantidadDescontada: cantidad
-    }));
-    const hoja = XLSX.utils.json_to_sheet(data);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "CierreCaja");
-    const fechaStr = format(fecha, "yyyy-MM-dd");
-    const buffer = XLSX.write(libro, { bookType: "xlsx", type: "array" });
-    const blob = new Blob([buffer], { type: "application/octet-stream" });
-    saveAs(blob, `CierreCaja_${fechaStr}.xlsx`);
-  };
+      CantidadDescontada: cantidad,
+    });
+  });
+
+  // Crear hoja única
+  const hoja = XLSX.utils.json_to_sheet(dataUnificada);
+  XLSX.utils.book_append_sheet(libro, hoja, "ResumenDetallado");
+
+  // Descargar archivo
+  const buffer = XLSX.write(libro, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([buffer], { type: "application/octet-stream" });
+  saveAs(blob, `Resumen_Cierre_${fechaStr}.xlsx`);
+};
 
   return (
     <div className="max-w-6xl min-h-screen px-4 py-6 mx-auto bg-base-100 text-base-content">
@@ -343,9 +413,9 @@ function CierreCaja() {
                 <li key={nombre}>{nombre}: {cantidad} unidades</li>
               ))}
             </ul>
-            <button className="mt-4 btn btn-outline btn-success" onClick={exportarExcel}>
-              📥 Exportar a Excel
-            </button>
+           <button className="mt-4 btn btn-outline btn-success" onClick={exportarExcelCompleto}>
+  📥 Exportar Excel Completo
+</button>
           </div>
 
           <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-secondary">
@@ -381,7 +451,37 @@ function CierreCaja() {
               </div>
             ))}
           </div>
+          <div className="p-4 mb-6 overflow-x-auto border rounded bg-base-200 border-error">
+  <h3 className="mb-4 text-lg font-semibold text-error">❗ Pedidos NO entregados registrados en el cierre</h3>
+  <table className="table w-full table-sm table-zebra">
+    <thead>
+      <tr><th>#</th><th>Nombre</th><th>Dirección</th><th>Repartidor</th><th>Pedido</th><th>Método</th></tr>
+    </thead>
+    <tbody>
+      {pedidosNoEntregados.length > 0 ? (
+        pedidosNoEntregados.map((p, i) => (
+          <tr key={p.id}>
+            <td>{i + 1}</td>
+            <td>{p.nombre}</td>
+            <td>{p.direccion}</td>
+            <td>{Array.isArray(p.asignadoA) ? p.asignadoA[0] : "-"}</td>
+            <td>{typeof p.pedido === "string" ? p.pedido.slice(0, 30) + "..." : "-"}</td>
+            <td>{p.metodoPago || "-"}</td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="6" className="italic text-center text-green-500">
+            ✅ No quedaron pedidos pendientes.
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
         </div>
+        
       )}
 
       

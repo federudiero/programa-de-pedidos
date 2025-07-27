@@ -135,34 +135,40 @@ setProductosFirestore(lista);
     const { resumen, total } = calcularResumenPedido();
     const pedidoFinal = `${resumen} | TOTAL: $${total}`;
 
-    const pedidoConProductos = {
-  nombre,
-  telefono,
-  partido,
-  direccion,
-  entreCalles,
-  pedido: pedidoFinal,
-  coordenadas,
-  productos: productosSeleccionados.map(p => ({
-    nombre: p.nombre,
-    cantidad: p.cantidad
-  })),
-  fecha: ahora,
+     const pedidoConProductos = {
+    nombre,
+    telefono,
+    partido,
+    direccion,
+    entreCalles,
+    pedido: pedidoFinal,
+    coordenadas,
+    productos: productosSeleccionados.map(p => ({
+      nombre: p.nombre,
+      cantidad: p.cantidad
+    })),
+    fecha: ahora,
     fechaStr: fechaStr
-
-};
-
-    if (pedidoAEditar) {
-      onActualizar({ ...pedidoAEditar, ...pedidoConProductos });
-      Swal.fire("✅ Pedido actualizado correctamente.");
-    } else {
-      onAgregar(pedidoConProductos);
-      Swal.fire("✅ Pedido cargado correctamente.");
-    }
-
-    resetFormulario();
   };
 
+  // 👉 Ejecutar la acción
+  if (pedidoAEditar) {
+    onActualizar({ ...pedidoAEditar, ...pedidoConProductos });
+  } else {
+    onAgregar(pedidoConProductos);
+  }
+
+  // ✅ Mostrar confirmación con SweetAlert
+  Swal.fire({
+    icon: "success",
+  title: pedidoAEditar ? "✅ Pedido actualizado correctamente." : "✅ Pedido cargado correctamente.",
+  confirmButtonText: "OK",
+  customClass: {
+    confirmButton: "swal2-confirm btn btn-primary"  },
+  }).then(() => {
+    resetFormulario();
+  });
+};
   return isLoaded ? (
     <div className="px-4 py-6">
       {bloqueado && (
