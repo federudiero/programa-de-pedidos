@@ -1,19 +1,18 @@
 // src/firebase/firebase.js
 import { initializeApp } from "firebase/app";
 import {
- 
   initializeFirestore,
   persistentLocalCache
 } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBCOZeq8qi33X1cIH0FrTRSNT9UxfTac08",
-  authDomain: "pedidospintureria-3ec7b.firebaseapp.com",
-  projectId: "pedidospintureria-3ec7b",
-  storageBucket: "pedidospintureria-3ec7b.appspot.com", // corregido
-  messagingSenderId: "907598985609",
-  appId: "1:907598985609:web:e39f635d3dd4c232438958"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);

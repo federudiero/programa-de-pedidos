@@ -12,6 +12,8 @@ import AdminStock from "./components/AdminStock";
 import CierreCaja from "./components/CierreCaja";
 import PanelStock from "./components/PanelStock";
 import EstadisticasPanel from "./components/EstadisticasPanel";
+import GeneradorPedidosTest from "./views/GeneradorPedidosTest";
+import EliminarPedidosPorFecha from "./views/EliminarPedidosPorFecha.jsx";
 
 function App() {
  
@@ -32,6 +34,9 @@ function App() {
           <Route path="/admin/cierre-caja" element={<CierreCaja />} />
           <Route path="/admin/panel-stock" element={<PanelStock />} />
           <Route path="/admin/estadisticas" element={<EstadisticasPanel />} />
+          <Route path="/generar-pedidos-test" element={<GeneradorPedidosTest />} />
+          <Route path="/eliminar-test" element={<EliminarPedidosPorFecha/>} />
+
         </Routes>
       </Router>
     </div>

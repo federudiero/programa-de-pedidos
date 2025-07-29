@@ -21,6 +21,25 @@ const [productosFirestore, setProductosFirestore] = useState([]);
   const [errorTelefono, setErrorTelefono] = useState("");
 
 
+const mapOptions = {
+  styles: [
+    {
+      featureType: "poi", // puntos de interés como negocios, bares, etc.
+      stylers: [{ visibility: "off" }]
+    },
+    {
+      featureType: "transit", // transporte público
+      stylers: [{ visibility: "off" }]
+    }
+  ],
+  streetViewControl: true, // 🔇 saca el icono del Street View
+  mapTypeControl: true,    // 🔇 saca el control de tipo de mapa
+  fullscreenControl: true, // 🔇 saca el botón de pantalla completa
+  zoomControl: true,        // ✅ deja el control de zoom
+  draggable: true,          // ✅ permite mover el mapa
+  scrollwheel: true         // ✅ permite hacer zoom con la rueda del mouse
+};
+
 const ahora = new Date();
 const fechaStr = format(ahora, "yyyy-MM-dd");
 
@@ -218,13 +237,14 @@ setProductosFirestore(lista);
 
               {coordenadas && (
                 <div className="h-48 my-4 overflow-hidden border rounded-lg border-base-300">
-                  <GoogleMap
-                    mapContainerStyle={{ width: "100%", height: "100%" }}
-                    center={coordenadas}
-                    zoom={16}
-                  >
-                    <Marker position={coordenadas} />
-                  </GoogleMap>
+                 <GoogleMap
+  mapContainerStyle={{ width: "100%", height: "100%" }}
+  center={coordenadas}
+  zoom={16}
+  options={mapOptions} // 🔍 acá se aplican los estilos
+>
+  <Marker position={coordenadas} />
+</GoogleMap>
                 </div>
               )}
 

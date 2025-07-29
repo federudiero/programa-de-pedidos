@@ -7,6 +7,26 @@ import {
 } from "@react-google-maps/api";
 import { BASE_DIRECCION } from "../config";
 
+
+const cleanMapOptions = {
+  styles: [
+    {
+      featureType: "poi", // oculta negocios
+      stylers: [{ visibility: "off" }]
+    },
+    {
+      featureType: "transit", // oculta líneas de colectivo/subte
+      stylers: [{ visibility: "off" }]
+    }
+  ],
+  streetViewControl: true,
+  mapTypeControl: true,
+  fullscreenControl: true,
+  zoomControl: true,
+  draggable: true,
+  scrollwheel: true,
+};
+
 const RutaOptimizada = ({ waypoints, onOrdenOptimizado }) => {
   const [directions, setDirections] = useState(null);
   const [paradas, setParadas] = useState([]);
@@ -69,10 +89,11 @@ const RutaOptimizada = ({ waypoints, onOrdenOptimizado }) => {
       <div style={{ height: "500px" }}>
         {isLoaded && (
           <GoogleMap
-            mapContainerStyle={{ width: "100%", height: "100%" }}
-            center={{ lat: -34.705977, lng: -58.523331 }}
-            zoom={11}
-          >
+  mapContainerStyle={{ width: "100%", height: "100%" }}
+  center={{ lat: -34.705977, lng: -58.523331 }}
+  zoom={11}
+  options={cleanMapOptions}
+>
             {directions && <DirectionsRenderer directions={directions} />}
             {paradas.map((parada, index) => (
               <Marker
