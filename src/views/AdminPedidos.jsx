@@ -19,7 +19,7 @@ import { useNavigate } from "react-router-dom";
 import EditarPedidoModal from "../components/EditarPedidoModal";
 import Swal from "sweetalert2";
 import AdminNavbar from "../components/AdminNavbar";
-import { format, parseISO } from "date-fns";
+import { format} from "date-fns";
 
 function AdminPedidos() {
   const navigate = useNavigate();
@@ -28,22 +28,16 @@ function AdminPedidos() {
   const [modalVisible, setModalVisible] = useState(false);
   const [pedidoAEditar, setPedidoAEditar] = useState(null);
 
-  const fechaGuardada = localStorage.getItem("fechaSeleccionadaAdmin");
-  let fechaInicial;
+ const fechaGuardada = localStorage.getItem("fechaSeleccionadaAdmin");
+let fechaInicial;
 
-  try {
-    if (fechaGuardada) {
-      fechaInicial = parseISO(fechaGuardada);
-    } else {
-      const hoyStr = format(new Date(), "yyyy-MM-dd");
-      localStorage.setItem("fechaSeleccionadaAdmin", hoyStr);
-      fechaInicial = parseISO(hoyStr);
-    }
-  } catch {
-    const hoyStr = format(new Date(), "yyyy-MM-dd");
-    fechaInicial = parseISO(hoyStr);
-  }
-
+if (fechaGuardada && !isNaN(new Date(fechaGuardada))) {
+  fechaInicial = new Date(fechaGuardada);
+} else {
+  const hoy = new Date();
+  fechaInicial = hoy;
+  localStorage.setItem("fechaSeleccionadaAdmin", hoy.toISOString());
+}
   const [fechaSeleccionada, setFechaSeleccionada] = useState(fechaInicial);
   const [diaCerrado, setDiaCerrado] = useState(false);
 
