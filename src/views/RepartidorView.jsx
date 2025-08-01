@@ -26,6 +26,9 @@ function RepartidorView() {
   const [viajeIniciado, setViajeIniciado] = useState(false);
   const [pedidosOrdenados, setPedidosOrdenados] = useState([]);
   const [bloqueado, setBloqueado] = useState(false);
+  const [modoManual, setModoManual] = useState(false);
+  const waypointsMemo = useMemo(() => [...pedidosOrdenados], [pedidosOrdenados]);
+
 
   useEffect(() => {
     const autorizado = localStorage.getItem("repartidorAutenticado");
@@ -168,6 +171,8 @@ function RepartidorView() {
 
   console.log("🧪 Estado de bloqueo:", bloqueado, "Fecha usada:", format(fechaSeleccionada, "yyyy-MM-dd"));
 
+  
+
 
   return (
     <div className="min-h-screen p-4 bg-base-100 text-base-content">
@@ -259,24 +264,44 @@ function RepartidorView() {
           </ul>
         </div>
 
-        <RutaOptimizada
-          origin={BASE_COORDENADAS}
-          destination={BASE_COORDENADAS}
-          waypoints={pedidosOrdenados}
-          onOrdenOptimizado={(orden) => {
-            if (bloqueado) return;
-            pedidosOrdenados.forEach((pedido, indexOriginal) => {
-              const nuevoIndex = orden.indexOf(indexOriginal);
-              if (nuevoIndex !== -1) {
-                updateDoc(doc(db, "pedidos", pedido.id), {
-                  ordenRuta: nuevoIndex + 1,
-                });
-              }
-            });
-          }}
-        />
+        <div className="mt-6">
+  <button
+    className="mb-4 btn btn-outline btn-secondary"
+    onClick={() => setModoManual(!modoManual)}
+    disabled={bloqueado}
+  >
+    {modoManual ? "🔁 Volver a ruta optimizada" : "✋ Ordenar ruta manualmente"}
+  </button>
 
-        <ListaRutaPasoAPaso pedidosOrdenados={pedidosOrdenados} />
+  <RutaOptimizada
+   
+  waypoints={waypointsMemo}
+    optimizar={!modoManual}
+    onOrdenOptimizado={(orden) => {
+      if (bloqueado || modoManual) return;
+      orden.forEach((pedido, index) => {
+        updateDoc(doc(db, "pedidos", pedido.id), {
+          ordenRuta: index + 1,
+        });
+      });
+      setPedidosOrdenados(orden.map((p, i) => ({ ...p, ordenRuta: i + 1 })));
+    }}
+  />
+</div>
+
+        <ListaRutaPasoAPaso
+  pedidosOrdenados={pedidosOrdenados}
+  bloqueado={bloqueado}
+  onReordenar={(nuevaLista) => {
+    if (bloqueado) return;
+    setPedidosOrdenados(nuevaLista.map((p, index) => ({ ...p, ordenRuta: index + 1 })));
+    nuevaLista.forEach((p, index) => {
+      updateDoc(doc(db, "pedidos", p.id), {
+        ordenRuta: index + 1,
+      });
+    });
+  }}
+/>
         <BotonIniciarViaje pedidos={pedidosOrdenados} onStart={() => setViajeIniciado(true)} />
 
         <div className="mt-6">
